@@ -87,3 +87,8 @@ if ( getenv( 'MEDIAWIKI_DEBUG' ) === '1' ) {
     $wgDebugDumpSql = true;
     $wgDebugLogFile = '/tmp/wiki-debug.log';
 }
+
+$trigowikiInfixSearch = "$IP/InfixTitleSearch.php";
+if ( file_exists( $trigowikiInfixSearch ) ) {
+    require_once $trigowikiInfixSearch;
+}

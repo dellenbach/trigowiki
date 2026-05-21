@@ -140,6 +140,7 @@ docker run -d \
     -v "${STAGING_ROOT}/config/UploadSettings.php:/var/www/mediawiki/UploadSettings.php" \
     -v "${STAGING_ROOT}/config/EmbeddingSettings.php:/var/www/mediawiki/EmbeddingSettings.php" \
     -v "${STAGING_ROOT}/config/CirrusSearchTuning.php:/var/www/mediawiki/CirrusSearchTuning.php" \
+    -v "${STAGING_ROOT}/config/InfixTitleSearch.php:/var/www/mediawiki/InfixTitleSearch.php" \
     -v "${STAGING_ROOT}/config/nginx.conf:/etc/nginx/nginx.conf" \
     -v "${STAGING_ROOT}/images:/var/www/mediawiki/images" \
     -v "${STAGING_ROOT}/Ressourcen:/var/www/mediawiki/resources/trigowiki:ro" \

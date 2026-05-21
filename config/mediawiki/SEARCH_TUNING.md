@@ -42,6 +42,14 @@ Sinnvolle Varianten:
 
 Fuer Trigowiki ist Variante 3 am besten: ein kleiner separater Title/Infix-Index fuer Suchvorschlaege plus der normale CirrusSearch-Volltext fuer die Trefferliste. So findet `gres` einen Vorschlag `Postgres`, ohne den Hauptindex mit Substrings aufzublaehen.
 
+Umgesetzt ist zunaechst die konservative Variante als Spezialseite `Special:InfixSearch`. Sie sucht Teilwoerter nur in Seitentiteln ausgewaehlter Namensraeume und ist damit deutlich billiger als Infix-Volltext im Elasticsearch-Hauptindex. Auf Staging wurde `gres` gegen MediaWiki 1.43 verifiziert und liefert unter anderem:
+
+- `Backup_und_Restore_(Postgres)`
+- `Postgres_Aufbau`
+- `Kategorie:Postgres`
+
+Die normale Suche bleibt unveraendert CirrusSearch-basiert. Fuer Benutzer kann die Spezialseite spaeter als Suchhilfe verlinkt oder bei Bedarf in die Suchoberflaeche integriert werden.
+
 ## Aehnlichkeitssuche
 
 Fuer "aehnliche Seiten" eignet sich ein separates Feature besser als die normale Suchbox:

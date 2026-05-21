@@ -51,6 +51,7 @@ services:
       - ${STAGING_ROOT:-/srv/mediawiki-staging}/config/UploadSettings.php:/var/www/mediawiki/UploadSettings.php
       - ${STAGING_ROOT:-/srv/mediawiki-staging}/config/EmbeddingSettings.php:/var/www/mediawiki/EmbeddingSettings.php
       - ${STAGING_ROOT:-/srv/mediawiki-staging}/config/CirrusSearchTuning.php:/var/www/mediawiki/CirrusSearchTuning.php
+      - ${STAGING_ROOT:-/srv/mediawiki-staging}/config/InfixTitleSearch.php:/var/www/mediawiki/InfixTitleSearch.php
       - ${STAGING_ROOT:-/srv/mediawiki-staging}/config/nginx.conf:/etc/nginx/nginx.conf
       - ${STAGING_ROOT:-/srv/mediawiki-staging}/images:/var/www/mediawiki/images
       - ${STAGING_ROOT:-/srv/mediawiki-staging}/Ressourcen:/var/www/mediawiki/resources/trigowiki:ro

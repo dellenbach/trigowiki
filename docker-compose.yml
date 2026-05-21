@@ -68,6 +68,7 @@ services:
     - /srv/mediawiki/config/UploadSettings.php:/var/www/mediawiki/UploadSettings.php
     - /srv/mediawiki/config/EmbeddingSettings.php:/var/www/mediawiki/EmbeddingSettings.php
     - /srv/mediawiki/config/CirrusSearchTuning.php:/var/www/mediawiki/CirrusSearchTuning.php
+    - /srv/mediawiki/config/InfixTitleSearch.php:/var/www/mediawiki/InfixTitleSearch.php
     - /srv/mediawiki/images:/var/www/mediawiki/images
     - /srv/mediawiki/Ressourcen:/var/www/mediawiki/resources/trigowiki:ro
     - /srv/mediawiki/extensions:/var/www/mediawiki/extensions

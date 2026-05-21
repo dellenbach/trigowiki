@@ -41,6 +41,7 @@ mkdir -p \
     "${STAGING_ROOT}/Ressourcen"
 
 cp "${REPO_ROOT}/config/mediawiki-lts/LocalSettings.php" "${STAGING_ROOT}/config-lts/LocalSettings.php"
+cp "${REPO_ROOT}/config/mediawiki/InfixTitleSearch.php" "${STAGING_ROOT}/config-lts/InfixTitleSearch.php"
 rsync -a --delete "${REPO_ROOT}/Ressourcen/" "${STAGING_ROOT}/Ressourcen/"
 chmod -R a+rX "${STAGING_ROOT}/Ressourcen"
 rsync -a --delete "${PROD_ROOT}/images/" "${STAGING_ROOT}/images/"
@@ -109,6 +110,7 @@ docker run -d \
     -e MEDIAWIKI_ENABLE_UPLOADS=1 \
     -e MEDIAWIKI_DEFAULT_SKIN=vector \
     -v "${STAGING_ROOT}/config-lts/LocalSettings.php:${STAGING_MEDIAWIKI_PATH}/LocalSettings.php:ro" \
+    -v "${STAGING_ROOT}/config-lts/InfixTitleSearch.php:${STAGING_MEDIAWIKI_PATH}/InfixTitleSearch.php:ro" \
     -v "${STAGING_ROOT}/images:/images" \
     -v "${STAGING_ROOT}/Ressourcen:${STAGING_MEDIAWIKI_PATH}/resources/trigowiki:ro" \
     "${STAGING_WIKI_IMAGE}" >/dev/null
