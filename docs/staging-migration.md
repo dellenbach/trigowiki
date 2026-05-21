@@ -50,10 +50,10 @@ Danach ist Staging erreichbar unter:
 http://brisen:8081/
 ```
 
-Falls der Suchindex direkt neu aufgebaut werden soll:
+Der Suchindex wird standardmaessig neu aufgebaut, damit die Staging-Suche direkt nach dem Refresh funktioniert. Fuer einen schnelleren Lauf ohne Suchindex kann `RUN_STAGING_REINDEX=0` gesetzt werden:
 
 ```bash
-RUN_STAGING_REINDEX=1 STAGING_HTTP_PORT=8081 ./script/staging-refresh.sh
+RUN_STAGING_REINDEX=0 STAGING_HTTP_PORT=8081 ./script/staging-refresh.sh
 ```
 
 ## Was das Skript tut
