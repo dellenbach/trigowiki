@@ -38,7 +38,7 @@ require_once "$IP/extensions/DrawioEditor/DrawioEditor.php";
 require_once "$IP/extensions/NativeSvgHandler/NativeSvgHandler.php";
 require_once "$IP/extensions/Widgets/Widgets.php";
 
-$wgCirrusSearchServers = [ 'elasticsearch' ];
+$wgCirrusSearchServers = [ getenv( 'MEDIAWIKI_SEARCH_HOST' ) ?: 'elasticsearch' ];
 
 $wgExtractsExtendOpenSearchXml = true;
 

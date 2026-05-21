@@ -14,8 +14,6 @@ services:
     container_name: mediawiki_mysql
     environment:
       MYSQL_DATABASE: wikidb
-      MYSQL_USER: root
-      MYSQL_PASSWORD: ${TRIGOWIKI_DB_PASSWORD:?set TRIGOWIKI_DB_PASSWORD in .env}
       MYSQL_ROOT_PASSWORD: ${TRIGOWIKI_DB_ROOT_PASSWORD:?set TRIGOWIKI_DB_ROOT_PASSWORD in .env}
       # MYSQL_RANDOM_ROOT_PASSWORD: 1
     ports:
@@ -51,6 +49,7 @@ services:
       MEDIAWIKI_DB_USER: root
       MEDIAWIKI_DB_TABLE_OPTIONS: ENGINE=InnoDB, DEFAULT CHARSET=binary
       MEDIAWIKI_DB_PASSWORD: ${TRIGOWIKI_DB_ROOT_PASSWORD:?set TRIGOWIKI_DB_ROOT_PASSWORD in .env}
+      MEDIAWIKI_SEARCH_HOST: elasticsearch
       MEDIAWIKI_ENABLE_UPLOADS: 1
       MEDIAWIKI_EXTENSION_VISUAL_EDITOR_ENABLED: 1
       MEDIAWIKI_DEFAULT_SKIN: vector
@@ -63,6 +62,7 @@ services:
 
     volumes:
     - /srv/mediawiki/config/LocalSettings.php:/var/www/mediawiki/LocalSettings.php
+    - /srv/mediawiki/config/ExtraLocalSettings.php:/var/www/mediawiki/ExtraLocalSettings.php
     - /srv/mediawiki/config/Permissions.php:/var/www/mediawiki/Permissions.php
     - /srv/mediawiki/config/Extensions.php:/var/www/mediawiki/Extensions.php
     - /srv/mediawiki/config/UploadSettings.php:/var/www/mediawiki/UploadSettings.php
