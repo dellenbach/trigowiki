@@ -9,6 +9,7 @@ Dieses Repository ist der Bauplan fuer Trigowiki. Es soll die Umgebung reproduzi
 - `docker-entrypoint.sh`: Container-Startlogik
 - `config/`: MediaWiki-, Nginx-, PHP-FPM-, Parsoid-, Supervisor- und Suchkonfiguration
 - `script/`: Wartungsskripte fuer Installation und Updates
+- `script/reindex-search.sh`: Suchindex und Suggester neu aufbauen
 - `deploy-trigowiki.ps1`: Deployment-Hilfsskript von Windows aus
 - `docs/`: Inventar, Restore-, Upgrade- und Betriebsnotizen
 
@@ -33,7 +34,7 @@ Die produktive Umgebung auf `brisen` ist aktuell die Quelle der Wahrheit. Vor ei
 2. **Sichern, aber nicht versionieren**: Datenbank, Uploads, Config-Backups, produktive Daten.
 3. **Neu erzeugen oder ignorieren**: Thumbnails, Caches, Logs, Suchindizes, Temp-Dateien.
 
-Der aktuelle produktive Stand wurde in `docs/production-inventory.md` festgehalten.
+Der aktuelle produktive Stand wurde in `docs/production-inventory.md` festgehalten. Die gezielt exportierte Produktionskonfiguration wurde in `docs/production-config-review.md` bewertet.
 
 ## Start und Wartung
 
@@ -54,6 +55,12 @@ MediaWiki-Update im Container:
 
 ```bash
 docker exec -it mediawiki_wiki /script/update.sh
+```
+
+Suchindex neu aufbauen:
+
+```bash
+docker exec -it mediawiki_wiki /script/reindex-search.sh
 ```
 
 Erstinstallation der Datenbank:
