@@ -19,9 +19,9 @@ Die Staging-Suche ist funktionsfaehig, der Suchindex wird beim Refresh neu aufge
 
 ## Upgrade-Ziel
 
-Ziel ist eine reproduzierbare zweite Staging-Variante mit aktueller MediaWiki-LTS-Version, ohne die produktive Instanz zu veraendern.
+Ziel ist ein reproduzierbares In-place-Upgrade der bestehenden Staging-Instanz auf `http://brisen:8081/` auf eine aktuelle MediaWiki-LTS-Version, ohne die produktive Instanz zu veraendern.
 
-Der Upgrade-Pfad sollte nicht direkt auf Produktion angewendet werden. Erst wenn die neue Staging-Variante erfolgreich laeuft, wird ein Produktions-Runbook erstellt.
+Der Upgrade-Pfad sollte nicht direkt auf Produktion angewendet werden. Erst wenn das In-place-Upgrade auf Staging erfolgreich laeuft, wird ein Produktions-Runbook erstellt.
 
 ## Wichtige Risiken
 
@@ -35,27 +35,43 @@ Der Upgrade-Pfad sollte nicht direkt auf Produktion angewendet werden. Erst wenn
 ## Vorgeschlagene Reihenfolge
 
 1. Neuen Upgrade-Branch oder neuen Commit-Abschnitt fuer LTS-Staging beginnen.
-2. Zweite Staging-Variante definieren, z. B. Port `8082`, Container-Suffix `_lts`, Root `/srv/mediawiki-staging-lts`.
+2. Snapshot der bestehenden Staging-Instanz erzeugen.
 3. Neues Docker-Image mit aktueller PHP-/MediaWiki-LTS-Basis bauen.
 4. Erweiterungen aufraeumen und nur kompatible Versionen in das neue Image oder einen reproduzierbaren Host-Pfad aufnehmen.
-5. Datenbankdump aus Produktion importieren.
+5. Datenbankdump aus Produktion importieren oder die Staging-DB gezielt per `maintenance/update.php` migrieren.
 6. `maintenance/update.php` gegen die neue Version ausfuehren.
 7. Neue Suchkomponente aufbauen. Elasticsearch 5.4 nicht weiterverwenden; passende OpenSearch-/Elasticsearch-Version fuer die Ziel-CirrusSearch-Version waehlen.
 8. Uploads und Ressourcen mounten, Logo und statische Ressourcen pruefen.
 9. Suche, Login, Bildanzeige, VisualEditor, PDF/Widgets/SyntaxHighlight und Spezialseiten testen.
 10. Erst danach Produktionsmigration planen.
 
+## Snapshot vor dem Upgrade
+
+Vor jedem In-place-Upgrade wird ein Snapshot erstellt:
+
+```bash
+cd /tmp/trigowiki-staging-repo-trigowikisvc
+./script/snapshot-staging.sh
+```
+
+Der Snapshot landet standardmaessig unter `/srv/mediawiki-staging/backup/snapshots/<timestamp>` und enthaelt:
+
+- Metadaten und Docker-Inventar.
+- Dump der Staging-Datenbank.
+- Archiv von `/srv/mediawiki-staging`.
+- Wiederherstellungsnotizen.
+
 ## Naechste technische Aufgabe
 
-Als naechstes sollte eine neue Staging-LTS-Konfiguration vorbereitet werden, getrennt von der aktuellen Alt-Staging-Instanz:
+Als naechstes sollte die bestehende Staging-Konfiguration fuer ein In-place-LTS-Upgrade vorbereitet werden:
 
-- `STAGING_LTS_ROOT=/srv/mediawiki-staging-lts`
-- Port `8082`
-- eigene DB- und Such-Volumes
-- eigene Container-Namen mit Suffix `_lts`
-- neues Dockerfile fuer die Ziel-LTS-Version
+- Snapshot unter `/srv/mediawiki-staging/backup/snapshots` erstellen.
+- `http://brisen:8081/` als Upgrade-Ziel beibehalten.
+- vorhandene Container-Namen mit Suffix `_staging` weiterverwenden.
+- neue Dockerfile-/Image-Variante fuer die Ziel-LTS-Version vorbereiten.
+- Suchdienst separat modernisieren, weil Elasticsearch 5.4 nicht zur modernen CirrusSearch-Zielversion passt.
 
-Damit bleibt `http://brisen:8081/` als Referenz fuer den reproduzierten Altbestand erhalten, waehrend `http://brisen:8082/` fuer das Upgrade-Experiment genutzt wird.
+Wenn das In-place-Upgrade scheitert, wird `8081` aus Snapshot und aktuellem Git-Stand wiederhergestellt.
 
 ## Akzeptanzkriterien fuer LTS-Staging
 
