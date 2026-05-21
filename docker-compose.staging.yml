@@ -53,6 +53,7 @@ services:
       - ${STAGING_ROOT:-/home/del/mediawiki-staging}/config/CirrusSearchTuning.php:/var/www/mediawiki/CirrusSearchTuning.php
       - ${STAGING_ROOT:-/home/del/mediawiki-staging}/config/nginx.conf:/etc/nginx/nginx.conf
       - ${STAGING_ROOT:-/home/del/mediawiki-staging}/images:/var/www/mediawiki/images
+      - ${STAGING_ROOT:-/home/del/mediawiki-staging}/Ressourcen:/var/www/mediawiki/resources/trigowiki:ro
       - ${STAGING_ROOT:-/home/del/mediawiki-staging}/extensions:/var/www/mediawiki/extensions
       - ${STAGING_ROOT:-/home/del/mediawiki-staging}/skins/Vector:/var/www/mediawiki/skins/Vector
       - ${STAGING_ROOT:-/home/del/mediawiki-staging}/includes:/var/www/mediawiki/includes

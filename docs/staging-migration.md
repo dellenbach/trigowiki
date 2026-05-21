@@ -23,6 +23,8 @@ Die produktive Umgebung bleibt lesend Quelle fuer Kopien:
 
 Die Konfiguration kommt aus dem Repository und wird nach `/home/del/mediawiki-staging/config` kopiert. Wenn das Skript mit einem Benutzer mit Schreibrechten unter `/srv` laeuft, kann `STAGING_ROOT=/srv/mediawiki-staging` gesetzt werden.
 
+Repo-Ressourcen wie das Trigonet-Logo werden nach `STAGING_ROOT/Ressourcen` kopiert und im Wiki unter `/resources/trigowiki/` ausgeliefert.
+
 ## Ausfuehren auf brisen
 
 Das Skript ist fuer Ausfuehrung auf dem Server gedacht:
@@ -60,7 +62,7 @@ RUN_STAGING_REINDEX=0 STAGING_HTTP_PORT=8081 ./script/staging-refresh.sh
 
 1. Staging-Verzeichnisse unter `STAGING_ROOT` anlegen, standardmaessig `/home/del/mediawiki-staging`.
 2. Repo-Konfiguration nach `STAGING_ROOT/config` kopieren.
-3. Produktive Uploads, Erweiterungen, Vector-Skin und Core-Dateien nach Staging synchronisieren.
+3. Repo-Ressourcen sowie produktive Uploads, Erweiterungen, Vector-Skin und Core-Dateien nach Staging synchronisieren.
 4. Produktive DB dumpen und in eine eigene Staging-DB importieren.
 5. Eigene Staging-Container starten.
 6. `maintenance/update.php --quick` im Staging-Wiki ausfuehren.

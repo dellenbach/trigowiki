@@ -23,6 +23,7 @@ mkdir -p \
     "${STAGING_ROOT}/backup" \
     "${STAGING_ROOT}/config" \
     "${STAGING_ROOT}/images" \
+    "${STAGING_ROOT}/Ressourcen" \
     "${STAGING_ROOT}/extensions" \
     "${STAGING_ROOT}/skins" \
     "${STAGING_ROOT}/includes"
@@ -30,6 +31,8 @@ mkdir -p \
 echo "Copying repository config to staging"
 cp "${REPO_ROOT}"/config/mediawiki/*.php "${STAGING_ROOT}/config/"
 cp "${REPO_ROOT}/config/nginx/nginx.conf" "${STAGING_ROOT}/config/nginx.conf"
+rsync -a --delete "${REPO_ROOT}/Ressourcen/" "${STAGING_ROOT}/Ressourcen/"
+chmod -R a+rX "${STAGING_ROOT}/Ressourcen"
 
 echo "Copying production file data to staging"
 rsync -a --delete "${PROD_ROOT}/images/" "${STAGING_ROOT}/images/"
@@ -85,6 +88,18 @@ docker run -d \
     -v esdata_staging:/usr/share/elasticsearch/data \
     elasticsearch:5.4 >/dev/null
 
+echo "Waiting for staging Elasticsearch"
+for attempt in $(seq 1 60); do
+    if docker exec "${STAGING_ES_CONTAINER}" curl -fsS http://localhost:9200/_cluster/health >/dev/null 2>&1; then
+        break
+    fi
+    if [ "${attempt}" -eq 60 ]; then
+        echo "Staging Elasticsearch did not become ready" >&2
+        exit 1
+    fi
+    sleep 2
+done
+
 echo "Starting staging wiki on port ${STAGING_HTTP_PORT}"
 docker run -d \
     --name "${STAGING_WIKI_CONTAINER}" \
@@ -114,6 +129,7 @@ docker run -d \
     -v "${STAGING_ROOT}/config/CirrusSearchTuning.php:/var/www/mediawiki/CirrusSearchTuning.php" \
     -v "${STAGING_ROOT}/config/nginx.conf:/etc/nginx/nginx.conf" \
     -v "${STAGING_ROOT}/images:/var/www/mediawiki/images" \
+    -v "${STAGING_ROOT}/Ressourcen:/var/www/mediawiki/resources/trigowiki:ro" \
     -v "${STAGING_ROOT}/extensions:/var/www/mediawiki/extensions" \
     -v "${STAGING_ROOT}/skins/Vector:/var/www/mediawiki/skins/Vector" \
     -v "${STAGING_ROOT}/includes:/var/www/mediawiki/includes" \

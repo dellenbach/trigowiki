@@ -29,7 +29,11 @@ if (getenv('MEDIAWIKI_SERVER') == '') {
 
 $wgResourceBasePath = $wgScriptPath;
 
-$wgLogo = "$wgResourceBasePath/resources/assets/wiki.png";
+$wgLogo = "$wgResourceBasePath/resources/trigowiki/trigonet_Logo_pos_ohneClaim_RGB.svg";
+$wgHooks['BeforePageDisplay'][] = function ( OutputPage $out, Skin $skin ) use ( $wgLogo ) {
+    $out->addInlineStyle( ".mw-wiki-logo { background-image: url('{$wgLogo}') !important; background-size: 135px auto; }" );
+    return true;
+};
 
 if (getenv('MEDIAWIKI_EMERGENCY_CONTACT') != '') {
     $wgEmergencyContact = getenv('MEDIAWIKI_EMERGENCY_CONTACT');

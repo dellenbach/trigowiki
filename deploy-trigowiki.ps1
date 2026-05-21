@@ -69,6 +69,7 @@ Copy-RemoteItem -LocalPath "Dockerfile" -RemotePath "$RemoteTmpDir/"
 Copy-RemoteItem -LocalPath "docker-entrypoint.sh" -RemotePath "$RemoteTmpDir/"
 Copy-RemoteItem -LocalPath "run-elasticsearch.sh" -RemotePath "$RemoteTmpDir/"
 Copy-RemoteItem -LocalPath "config" -RemotePath "$RemoteTmpDir/"
+Copy-RemoteItem -LocalPath "Ressourcen" -RemotePath "$RemoteTmpDir/"
 Copy-RemoteItem -LocalPath "script" -RemotePath "$RemoteTmpDir/"
 Copy-RemoteItem -LocalPath "mediawiki" -RemotePath "$RemoteTmpDir/"
 
