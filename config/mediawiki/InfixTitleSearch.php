@@ -6,6 +6,16 @@ if ( !defined( 'MEDIAWIKI' ) ) {
 
 $wgSpecialPages['InfixSearch'] = 'SpecialInfixSearch';
 $wgAutoloadClasses['SpecialInfixSearch'] = __FILE__;
+$wgHooks['SearchAfterNoDirectMatch'][] = 'trigowikiInfixSearchAfterNoDirectMatch';
+
+function trigowikiInfixSearchAfterNoDirectMatch( $term, &$title ) {
+    $candidate = SpecialInfixSearch::findFirstTitleForTerm( $term, 1 );
+    if ( $candidate instanceof Title ) {
+        $title = $candidate;
+        return false;
+    }
+    return true;
+}
 
 class SpecialInfixSearch extends SpecialPage {
     public function __construct() {
@@ -77,12 +87,9 @@ class SpecialInfixSearch extends SpecialPage {
     }
 
     private function findTitles( $query, $limit ) {
-        if ( class_exists( 'MediaWiki\\MediaWikiServices' ) ) {
-            $dbr = MediaWiki\MediaWikiServices::getInstance()->getDBLoadBalancer()->getConnection( DB_REPLICA );
-        } else {
-            $dbr = wfGetDB( DB_REPLICA );
-        }
-        $like = $dbr->buildLike( $dbr->anyString(), str_replace( ' ', '_', $query ), $dbr->anyString() );
+        $dbr = self::getReadDb();
+        $normalized = self::normalizeTerm( $query );
+        $like = $dbr->buildLike( $dbr->anyString(), str_replace( ' ', '_', $normalized ), $dbr->anyString() );
 
         $res = $dbr->select(
             'page',
@@ -104,5 +111,59 @@ class SpecialInfixSearch extends SpecialPage {
         }
 
         return $rows;
+    }
+
+    public static function findFirstTitleForTerm( $query, $limit = 1 ) {
+        $query = self::normalizeTerm( $query );
+        if ( $query === '' || mb_strlen( $query ) < 3 ) {
+            return null;
+        }
+
+        $dbr = self::getReadDb();
+        $like = $dbr->buildLike( $dbr->anyString(), str_replace( ' ', '_', $query ), $dbr->anyString() );
+
+        $res = $dbr->select(
+            'page',
+            [ 'page_namespace', 'page_title' ],
+            [
+                'page_title ' . $like,
+                'page_namespace' => [ NS_MAIN, NS_PROJECT, NS_HELP, NS_CATEGORY ],
+            ],
+            __METHOD__,
+            [
+                'ORDER BY' => [ 'page_is_redirect ASC', 'page_namespace ASC', 'page_title ASC' ],
+                'LIMIT' => max( 1, (int)$limit ),
+            ]
+        );
+
+        foreach ( $res as $row ) {
+            $title = Title::makeTitleSafe( (int)$row->page_namespace, $row->page_title );
+            if ( $title ) {
+                return $title;
+            }
+        }
+
+        return null;
+    }
+
+    private static function normalizeTerm( $term ) {
+        $term = trim( preg_replace( '/\s+/', ' ', (string)$term ) );
+        return trim( str_replace( [ '*', '"', "'" ], '', $term ) );
+    }
+
+    private static function getReadDb() {
+        if ( class_exists( '\\MediaWiki\\MediaWikiServices' ) ) {
+            $lb = \MediaWiki\MediaWikiServices::getInstance()->getDBLoadBalancer();
+            if ( defined( 'DB_REPLICA' ) ) {
+                return $lb->getConnection( DB_REPLICA );
+            }
+            return $lb->getConnection( DB_SLAVE );
+        }
+
+        if ( defined( 'DB_REPLICA' ) ) {
+            return wfGetDB( DB_REPLICA );
+        }
+
+        return wfGetDB( DB_SLAVE );
     }
 }
