@@ -101,11 +101,14 @@ ENABLE_MODERN_SEARCH=1 RUN_STAGING_REINDEX=1 ./script/staging-lts-inplace.sh
 Was dabei passiert:
 
 - `extensions-lts/Elastica` und `extensions-lts/CirrusSearch` werden unter `/srv/mediawiki-staging` bereitgestellt.
+- Composer-Abhaengigkeiten fuer beide Erweiterungen werden im Runner automatisch installiert (`vendor/autoload.php` vorhanden).
 - Ein eigener Suchcontainer `elasticsearch_staging_lts` wird im `_staging`-Netz gestartet.
 - `config/mediawiki-lts/SearchSettings.php` aktiviert CirrusSearch nur wenn `MEDIAWIKI_SEARCH_ENABLED=1` gesetzt ist.
 - Danach werden die Suchindizes per Cirrus-Maintenance-Skripten neu aufgebaut.
 
 Hinweis: Auf einzelnen Hosts kann unter strikter Seccomp-Policy bei Lua/Shellbox `proc_open()/posix_spawn` fehlschlagen. Der Staging-LTS-Runner startet den Wiki-Container deshalb mit `--security-opt seccomp=unconfined`, um Scribunto/Cirrus-Reindex stabil auszufuehren.
+
+Hinweis: `RunSearch.php` ist als Smoke-Test auf diesem Host nicht geeignet, weil dafuer die PHP-Erweiterung `pcntl` benoetigt wird. Fuer Validierung weiter `UpdateSearchIndexConfig.php`, `ForceSearchIndex.php` und `CheckIndexes.php` verwenden.
 
 ## Akzeptanzkriterien fuer LTS-Staging
 

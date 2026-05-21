@@ -28,6 +28,7 @@ RUN_STAGING_REINDEX=${RUN_STAGING_REINDEX:-1}
 STAGING_ELASTICA_BRANCH=${STAGING_ELASTICA_BRANCH:-REL1_43}
 STAGING_CIRRUS_BRANCH=${STAGING_CIRRUS_BRANCH:-REL1_43}
 STAGING_SEARCH_VOLUME=${STAGING_SEARCH_VOLUME:-esdata_lts_staging}
+RUN_STAGING_EXTENSION_COMPOSER=${RUN_STAGING_EXTENSION_COMPOSER:-1}
 
 ensure_lts_extension() {
     local repo_url=$1
@@ -50,6 +51,31 @@ ensure_lts_extension() {
         --entrypoint sh \
         alpine/git:2.45.2 \
         -lc "cd '/work/${target_name}' && git fetch --depth 1 origin '${branch}' && git checkout -f '${branch}' && git reset --hard FETCH_HEAD" >/dev/null
+}
+
+ensure_extension_vendor() {
+    local extension_dir=$1
+    local extension_name
+    extension_name=$(basename "${extension_dir}")
+
+    if [ ! -f "${extension_dir}/composer.json" ]; then
+        return
+    fi
+
+    if [ "${RUN_STAGING_EXTENSION_COMPOSER}" != "1" ] && [ -f "${extension_dir}/vendor/autoload.php" ]; then
+        return
+    fi
+
+    echo "Installing Composer dependencies for ${extension_name}"
+    docker run --rm \
+        -v "${extension_dir}:/app" \
+        composer:2 \
+        install --no-dev --no-interaction --prefer-dist --ignore-platform-reqs >/dev/null
+
+    if [ ! -f "${extension_dir}/vendor/autoload.php" ]; then
+        echo "Composer dependencies missing for ${extension_name} after install" >&2
+        exit 1
+    fi
 }
 
 current_user=$(id -un)
@@ -82,6 +108,8 @@ if [ "${ENABLE_MODERN_SEARCH}" = "1" ]; then
     echo "Preparing CirrusSearch extensions for MediaWiki LTS"
     ensure_lts_extension "https://gerrit.wikimedia.org/r/mediawiki/extensions/Elastica" "${STAGING_ELASTICA_BRANCH}" "${STAGING_ROOT}/extensions-lts/Elastica"
     ensure_lts_extension "https://gerrit.wikimedia.org/r/mediawiki/extensions/CirrusSearch" "${STAGING_CIRRUS_BRANCH}" "${STAGING_ROOT}/extensions-lts/CirrusSearch"
+    ensure_extension_vendor "${STAGING_ROOT}/extensions-lts/Elastica"
+    ensure_extension_vendor "${STAGING_ROOT}/extensions-lts/CirrusSearch"
 fi
 
 dump_file="${STAGING_ROOT}/backup/wikidb-staging-lts.sql"

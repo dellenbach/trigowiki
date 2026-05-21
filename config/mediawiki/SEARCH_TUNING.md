@@ -50,7 +50,7 @@ Umgesetzt ist zunaechst die konservative Variante als Spezialseite `Special:Infi
 
 Die normale Suche bleibt unveraendert CirrusSearch-basiert. Fuer Benutzer kann die Spezialseite spaeter als Suchhilfe verlinkt oder bei Bedarf in die Suchoberflaeche integriert werden.
 
-Zusatz: Ueber den Hook `SearchAfterNoDirectMatch` nutzt die normale Such-Navigation den Titel-Infix-Fallback bereits als "Go"-Naehertreffer. Damit fuehren Anfragen wie `gres` direkt auf die beste passende Seite, ohne den Volltextindex umzustellen.
+Zusatz: Ueber den Hook `SearchAfterNoDirectMatch` nutzt die normale Such-Navigation den Titel-Infix-Fallback bereits als "Go"-Naehertreffer. Das passiert nur bei eindeutigen Infix-Treffern, damit breite Kurzbegriffe wie `gis` nicht auf eine zufaellige alphabetische Trefferseite springen.
 
 ## Aehnlichkeitssuche
 

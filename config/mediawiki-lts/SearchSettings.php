@@ -14,6 +14,29 @@ if ( !file_exists( $elasticaExtension ) || !file_exists( $cirrusExtension ) ) {
     return;
 }
 
+// Elastica vendor autoload must be explicitly required when the extension is
+// mounted as a volume; Apache/PHP-FPM does not auto-require it.
+//
+// Problem: Elastica vendor ships PSR-3 v2 (setLogger(): void), while
+// MediaWiki's own BagOStuff implements PSR-3 v1 (no :void return type).
+// If Elastica's autoloader loads PSR-3 v2 before BagOStuff is instantiated,
+// PHP 8 raises a fatal interface-compatibility error.
+//
+// Fix: explicitly require MediaWiki's PSR-3 v1 class files BEFORE registering
+// Elastica's autoloader, so they are already in the class table and Elastica's
+// PSR-3 v2 autoloader will never fire for those classes.
+$mwPsr3Dir = "$IP/vendor/psr/log/Psr/Log";
+if ( is_dir( $mwPsr3Dir ) ) {
+    foreach ( glob( "$mwPsr3Dir/*.php" ) as $mwPsr3File ) {
+        require_once $mwPsr3File;
+    }
+}
+
+$elasticaAutoload = "$IP/extensions/Elastica/vendor/autoload.php";
+if ( file_exists( $elasticaAutoload ) ) {
+    require_once $elasticaAutoload;
+}
+
 wfLoadExtension( 'Elastica' );
 wfLoadExtension( 'CirrusSearch' );
 

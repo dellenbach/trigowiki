@@ -122,6 +122,7 @@ class SpecialInfixSearch extends SpecialPage {
         $dbr = self::getReadDb();
         $like = $dbr->buildLike( $dbr->anyString(), str_replace( ' ', '_', $query ), $dbr->anyString() );
 
+        $fetchLimit = max( 2, (int)$limit + 1 );
         $res = $dbr->select(
             'page',
             [ 'page_namespace', 'page_title' ],
@@ -132,18 +133,19 @@ class SpecialInfixSearch extends SpecialPage {
             __METHOD__,
             [
                 'ORDER BY' => [ 'page_is_redirect ASC', 'page_namespace ASC', 'page_title ASC' ],
-                'LIMIT' => max( 1, (int)$limit ),
+                'LIMIT' => $fetchLimit,
             ]
         );
 
+        $matches = [];
         foreach ( $res as $row ) {
             $title = Title::makeTitleSafe( (int)$row->page_namespace, $row->page_title );
             if ( $title ) {
-                return $title;
+                $matches[] = $title;
             }
         }
 
-        return null;
+        return count( $matches ) === 1 ? $matches[0] : null;
     }
 
     private static function normalizeTerm( $term ) {
