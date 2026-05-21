@@ -3,7 +3,8 @@ set -euo pipefail
 
 REPO_ROOT=${REPO_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}
 PROD_ROOT=${PROD_ROOT:-/srv/mediawiki}
-STAGING_ROOT=${STAGING_ROOT:-${HOME}/mediawiki-staging}
+STAGING_SERVICE_USER=${STAGING_SERVICE_USER:-trigowikisvc}
+STAGING_ROOT=${STAGING_ROOT:-/srv/mediawiki-staging}
 STAGING_HTTP_PORT=${STAGING_HTTP_PORT:-8081}
 STAGING_MEDIAWIKI_SERVER=${STAGING_MEDIAWIKI_SERVER:-http://brisen:${STAGING_HTTP_PORT}}
 
@@ -12,11 +13,18 @@ STAGING_DB_CONTAINER=${STAGING_DB_CONTAINER:-mediawiki_mysql_staging}
 STAGING_WIKI_CONTAINER=${STAGING_WIKI_CONTAINER:-mediawiki_wiki_staging}
 STAGING_ES_CONTAINER=${STAGING_ES_CONTAINER:-elasticsearch_staging}
 STAGING_NETWORK=${STAGING_NETWORK:-trigowiki_staging}
+STAGING_WIKI_IMAGE=${STAGING_WIKI_IMAGE:-trigowiki}
 
 STAGING_DB_ROOT_PASSWORD=${STAGING_DB_ROOT_PASSWORD:-staging-root-change-me}
 STAGING_MEDIAWIKI_SECRET_KEY=${STAGING_MEDIAWIKI_SECRET_KEY:-staging-secret-change-me}
 RUN_STAGING_REINDEX=${RUN_STAGING_REINDEX:-1}
 RESET_STAGING_VOLUMES=${RESET_STAGING_VOLUMES:-1}
+BUILD_STAGING_IMAGE=${BUILD_STAGING_IMAGE:-1}
+
+current_user=$(id -un)
+if [ "${current_user}" != "${STAGING_SERVICE_USER}" ]; then
+    echo "Warning: staging refresh runs as ${current_user}; target service user is ${STAGING_SERVICE_USER}." >&2
+fi
 
 echo "Preparing staging directories in ${STAGING_ROOT}"
 mkdir -p \
@@ -46,6 +54,11 @@ docker exec "${PROD_DB_CONTAINER}" sh -c 'exec mysqldump -uroot -p"$MYSQL_ROOT_P
 
 echo "Creating staging Docker network"
 docker network inspect "${STAGING_NETWORK}" >/dev/null 2>&1 || docker network create "${STAGING_NETWORK}" >/dev/null
+
+if [ "${BUILD_STAGING_IMAGE}" = "1" ]; then
+    echo "Building staging wiki image ${STAGING_WIKI_IMAGE}"
+    docker build -t "${STAGING_WIKI_IMAGE}" "${REPO_ROOT}"
+fi
 
 echo "Replacing old staging containers"
 docker rm -f "${STAGING_WIKI_CONTAINER}" "${STAGING_DB_CONTAINER}" "${STAGING_ES_CONTAINER}" >/dev/null 2>&1 || true
@@ -133,7 +146,7 @@ docker run -d \
     -v "${STAGING_ROOT}/extensions:/var/www/mediawiki/extensions" \
     -v "${STAGING_ROOT}/skins/Vector:/var/www/mediawiki/skins/Vector" \
     -v "${STAGING_ROOT}/includes:/var/www/mediawiki/includes" \
-    trigowiki >/dev/null
+    "${STAGING_WIKI_IMAGE}" >/dev/null
 
 echo "Waiting for staging wiki container"
 sleep 10

@@ -11,7 +11,7 @@ services:
       - wikinet_staging
     volumes:
       - mediawiki_mysql_staging:/var/lib/mysql
-      - ${STAGING_ROOT:-/home/del/mediawiki-staging}/backup:/srv/mediawiki/backup
+      - ${STAGING_ROOT:-/srv/mediawiki-staging}/backup:/srv/mediawiki/backup
 
   mediawiki_wiki_staging:
     build:
@@ -44,19 +44,19 @@ services:
       - mediawiki_mysql_staging
       - elasticsearch_staging
     volumes:
-      - ${STAGING_ROOT:-/home/del/mediawiki-staging}/config/LocalSettings.php:/var/www/mediawiki/LocalSettings.php
-      - ${STAGING_ROOT:-/home/del/mediawiki-staging}/config/ExtraLocalSettings.php:/var/www/mediawiki/ExtraLocalSettings.php
-      - ${STAGING_ROOT:-/home/del/mediawiki-staging}/config/Permissions.php:/var/www/mediawiki/Permissions.php
-      - ${STAGING_ROOT:-/home/del/mediawiki-staging}/config/Extensions.php:/var/www/mediawiki/Extensions.php
-      - ${STAGING_ROOT:-/home/del/mediawiki-staging}/config/UploadSettings.php:/var/www/mediawiki/UploadSettings.php
-      - ${STAGING_ROOT:-/home/del/mediawiki-staging}/config/EmbeddingSettings.php:/var/www/mediawiki/EmbeddingSettings.php
-      - ${STAGING_ROOT:-/home/del/mediawiki-staging}/config/CirrusSearchTuning.php:/var/www/mediawiki/CirrusSearchTuning.php
-      - ${STAGING_ROOT:-/home/del/mediawiki-staging}/config/nginx.conf:/etc/nginx/nginx.conf
-      - ${STAGING_ROOT:-/home/del/mediawiki-staging}/images:/var/www/mediawiki/images
-      - ${STAGING_ROOT:-/home/del/mediawiki-staging}/Ressourcen:/var/www/mediawiki/resources/trigowiki:ro
-      - ${STAGING_ROOT:-/home/del/mediawiki-staging}/extensions:/var/www/mediawiki/extensions
-      - ${STAGING_ROOT:-/home/del/mediawiki-staging}/skins/Vector:/var/www/mediawiki/skins/Vector
-      - ${STAGING_ROOT:-/home/del/mediawiki-staging}/includes:/var/www/mediawiki/includes
+      - ${STAGING_ROOT:-/srv/mediawiki-staging}/config/LocalSettings.php:/var/www/mediawiki/LocalSettings.php
+      - ${STAGING_ROOT:-/srv/mediawiki-staging}/config/ExtraLocalSettings.php:/var/www/mediawiki/ExtraLocalSettings.php
+      - ${STAGING_ROOT:-/srv/mediawiki-staging}/config/Permissions.php:/var/www/mediawiki/Permissions.php
+      - ${STAGING_ROOT:-/srv/mediawiki-staging}/config/Extensions.php:/var/www/mediawiki/Extensions.php
+      - ${STAGING_ROOT:-/srv/mediawiki-staging}/config/UploadSettings.php:/var/www/mediawiki/UploadSettings.php
+      - ${STAGING_ROOT:-/srv/mediawiki-staging}/config/EmbeddingSettings.php:/var/www/mediawiki/EmbeddingSettings.php
+      - ${STAGING_ROOT:-/srv/mediawiki-staging}/config/CirrusSearchTuning.php:/var/www/mediawiki/CirrusSearchTuning.php
+      - ${STAGING_ROOT:-/srv/mediawiki-staging}/config/nginx.conf:/etc/nginx/nginx.conf
+      - ${STAGING_ROOT:-/srv/mediawiki-staging}/images:/var/www/mediawiki/images
+      - ${STAGING_ROOT:-/srv/mediawiki-staging}/Ressourcen:/var/www/mediawiki/resources/trigowiki:ro
+      - ${STAGING_ROOT:-/srv/mediawiki-staging}/extensions:/var/www/mediawiki/extensions
+      - ${STAGING_ROOT:-/srv/mediawiki-staging}/skins/Vector:/var/www/mediawiki/skins/Vector
+      - ${STAGING_ROOT:-/srv/mediawiki-staging}/includes:/var/www/mediawiki/includes
 
   elasticsearch_staging:
     image: elasticsearch:5.4
