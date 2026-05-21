@@ -15,8 +15,8 @@ services:
     environment:
       MYSQL_DATABASE: wikidb
       MYSQL_USER: root
-      MYSQL_PASSWORD: pw4mysql
-      MYSQL_ROOT_PASSWORD: pw4mysql
+      MYSQL_PASSWORD: ${TRIGOWIKI_DB_PASSWORD:?set TRIGOWIKI_DB_PASSWORD in .env}
+      MYSQL_ROOT_PASSWORD: ${TRIGOWIKI_DB_ROOT_PASSWORD:?set TRIGOWIKI_DB_ROOT_PASSWORD in .env}
       # MYSQL_RANDOM_ROOT_PASSWORD: 1
     ports:
       - 3306:3306
@@ -26,7 +26,7 @@ services:
       - mediawiki_mysql:/var/lib/mysql
       - /srv/mediawiki/backup:/srv/mediawiki/backup
       #- ./backup/trigowiki_dump.sql:/docker-entrypoint-initdb.d/trigowiki_dump.sql
-      #manuell: docker exec -i mediawiki_mysql mysql -hlocalhost -uroot -ppw4mysql wikidb < ./backup/trigowiki_dump.sql
+      #manuell: docker exec -i mediawiki_mysql mysql -hlocalhost -uroot -p"$TRIGOWIKI_DB_ROOT_PASSWORD" wikidb < ./backup/trigowiki_dump.sql
 
   mediawiki_wiki:
     build:
@@ -43,14 +43,14 @@ services:
       MEDIAWIKI_SERVER: http://trigowiki.trigonet.local
       MEDIAWIKI_SITENAME: Trigowiki
       MEDIAWIKI_LANGUAGE_CODE: de
-      MEDIAWIKI_SECRET_KEY: 80d726a1358eaf6f0696ed203dd18ae9b7d4bfe5de7f3ee3fbe8dc047e334442
+      MEDIAWIKI_SECRET_KEY: ${MEDIAWIKI_SECRET_KEY:?set MEDIAWIKI_SECRET_KEY in .env}
       MEDIAWIKI_DB_TYPE: mysql
       MEDIAWIKI_DB_HOST: mediawiki_mysql
       MEDIAWIKI_DB_PORT: 3306
       MEDIAWIKI_DB_NAME: wikidb
       MEDIAWIKI_DB_USER: root
       MEDIAWIKI_DB_TABLE_OPTIONS: ENGINE=InnoDB, DEFAULT CHARSET=binary
-      MEDIAWIKI_DB_PASSWORD: pw4mysql
+      MEDIAWIKI_DB_PASSWORD: ${TRIGOWIKI_DB_ROOT_PASSWORD:?set TRIGOWIKI_DB_ROOT_PASSWORD in .env}
       MEDIAWIKI_ENABLE_UPLOADS: 1
       MEDIAWIKI_EXTENSION_VISUAL_EDITOR_ENABLED: 1
       MEDIAWIKI_DEFAULT_SKIN: vector
@@ -63,6 +63,10 @@ services:
 
     volumes:
     - /srv/mediawiki/config/LocalSettings.php:/var/www/mediawiki/LocalSettings.php
+    - /srv/mediawiki/config/Permissions.php:/var/www/mediawiki/Permissions.php
+    - /srv/mediawiki/config/Extensions.php:/var/www/mediawiki/Extensions.php
+    - /srv/mediawiki/config/UploadSettings.php:/var/www/mediawiki/UploadSettings.php
+    - /srv/mediawiki/config/EmbeddingSettings.php:/var/www/mediawiki/EmbeddingSettings.php
     - /srv/mediawiki/config/CirrusSearchTuning.php:/var/www/mediawiki/CirrusSearchTuning.php
     - /srv/mediawiki/images:/var/www/mediawiki/images
     - /srv/mediawiki/extensions:/var/www/mediawiki/extensions

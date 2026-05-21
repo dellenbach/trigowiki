@@ -12,6 +12,11 @@ Die produktive Konfiguration ist die aktuelle Wahrheit, aber sie ist nicht direk
 
 - Das produktive Such-Reindex-Skript wurde als `script/reindex-search.sh` versioniert.
 - Das Produktionsinventar liegt unter `docs/production-inventory.md`.
+- Produktive Spezialkonfiguration wurde in modulare MediaWiki-Dateien aufgeteilt:
+   - `config/mediawiki/Permissions.php`
+   - `config/mediawiki/Extensions.php`
+   - `config/mediawiki/UploadSettings.php`
+   - `config/mediawiki/EmbeddingSettings.php`
 - Die exportierten Rohdateien bleiben unter `tmp/production-config/` und sind durch `.gitignore` ausgeschlossen.
 
 ## Nicht blind uebernommen
@@ -21,18 +26,19 @@ Die produktive Konfiguration ist die aktuelle Wahrheit, aber sie ist nicht direk
 
 ## Naechste Arbeiten
 
-1. `LocalSettings.php` modularisieren:
-   - Basis-Settings aus Environment beibehalten.
-   - Produktive Erweiterungen in eine eigene Datei auslagern, zum Beispiel `config/mediawiki/Extensions.php`.
-   - Suchkonfiguration in `config/mediawiki/CirrusSearchTuning.php` belassen.
-   - Drawio, Iframe, Upload- und PDF-Spezialkonfiguration separat dokumentieren.
-2. Secrets aus versionierten Dateien entfernen:
+1. Secrets aus versionierten Dateien entfernen:
    - Datenbank-Passwoerter
    - Secret Key
    - Upgrade Key
    - SMTP-Zugangsdaten, falls vorhanden
-3. Extension-Kompatibilitaetsmatrix fuer die aktuelle MediaWiki-LTS-Version erstellen.
-4. Entscheiden, ob `config/nginx/nginx.conf` in der lokalen bereinigten Form committed werden soll.
+2. Extension-Kompatibilitaetsmatrix fuer die aktuelle MediaWiki-LTS-Version erstellen.
+3. Entscheiden, ob `config/nginx/nginx.conf` in der lokalen bereinigten Form committed werden soll.
+
+## Secret-Stand
+
+`docker-compose.yml` verwendet fuer Datenbankpasswoerter und `MEDIAWIKI_SECRET_KEY` Environment-Variablen. Die benoetigten Variablen sind in `.env.example` dokumentiert; die echte `.env` bleibt ignoriert.
+
+Die produktive `LocalSettings.php` enthaelt weiterhin reale Werte im exportierten `tmp/production-config/`-Bereich. Dieser Bereich ist absichtlich ignoriert und darf nicht committed werden.
 
 ## Risiko-Hinweise
 

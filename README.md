@@ -38,6 +38,8 @@ Der aktuelle produktive Stand wurde in `docs/production-inventory.md` festgehalt
 
 ## Start und Wartung
 
+Vor dem Start muss lokal bzw. auf dem Server eine `.env`-Datei mit den benoetigten Secrets aus `.env.example` angelegt werden. `.env` ist absichtlich ignoriert und gehoert nicht ins Git.
+
 Start im Repository bzw. auf dem Server im Zielpfad:
 
 ```bash

@@ -216,16 +216,15 @@ if (getenv('MEDIAWIKI_EXTENSION_USER_MERGE_ENABLED') == ''
 # Load extra settings
 require 'ExtraLocalSettings.php';
 
-
-
-# MP4 als Dateiendung erlauben
-$wgFileExtensions[] = 'mp4';
-
-# Falls du strikte MIME-Prüfung aktiv hast (empfohlen):
-$wgVerifyMimeType = true;
-
-# MP4-MIME-Typ explizit erlauben
-$wgAllowedMimeTypes[] = 'video/mp4';
-
-# Optional: als „trusted media format“ markieren (für Inline-Einbindung)
-$wgTrustedMediaFormats[] = 'video/mp4';
+foreach ( [
+    'Permissions.php',
+    'Extensions.php',
+    'UploadSettings.php',
+    'EmbeddingSettings.php',
+    'CirrusSearchTuning.php',
+] as $trigowikiSettingsFile ) {
+    $trigowikiSettingsPath = "$IP/$trigowikiSettingsFile";
+    if ( file_exists( $trigowikiSettingsPath ) ) {
+        require_once $trigowikiSettingsPath;
+    }
+}
