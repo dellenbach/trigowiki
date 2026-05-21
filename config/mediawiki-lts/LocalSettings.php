@@ -92,3 +92,8 @@ $trigowikiInfixSearch = "$IP/InfixTitleSearch.php";
 if ( file_exists( $trigowikiInfixSearch ) ) {
     require_once $trigowikiInfixSearch;
 }
+
+$trigowikiSearchSettings = "$IP/SearchSettings.php";
+if ( file_exists( $trigowikiSearchSettings ) ) {
+    require_once $trigowikiSearchSettings;
+}
