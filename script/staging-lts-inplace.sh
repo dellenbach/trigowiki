@@ -227,11 +227,15 @@ fi
 
 if [ "${ENABLE_MODERN_SEARCH}" = "1" ] && [ "${RUN_STAGING_REINDEX}" = "1" ]; then
     echo "Rebuilding CirrusSearch index on LTS staging"
+    echo "Clearing stale CirrusSearch jobs from imported database"
+    docker exec "${STAGING_DB_CONTAINER}" sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" wikidb -e "DELETE FROM job WHERE job_cmd LIKE '\''cirrusSearch%'\''"'
     docker exec "${STAGING_WIKI_CONTAINER}" php "${STAGING_MEDIAWIKI_PATH}/extensions/CirrusSearch/maintenance/UpdateSearchIndexConfig.php" --reindexAndRemoveOk --indexIdentifier now
     docker exec "${STAGING_WIKI_CONTAINER}" php "${STAGING_MEDIAWIKI_PATH}/extensions/CirrusSearch/maintenance/UpdateSearchIndexConfig.php"
-    docker exec "${STAGING_WIKI_CONTAINER}" php "${STAGING_MEDIAWIKI_PATH}/extensions/CirrusSearch/maintenance/UpdateSuggesterIndex.php"
     docker exec "${STAGING_WIKI_CONTAINER}" php "${STAGING_MEDIAWIKI_PATH}/extensions/CirrusSearch/maintenance/ForceSearchIndex.php" --skipLinks --indexOnSkip
     docker exec "${STAGING_WIKI_CONTAINER}" php "${STAGING_MEDIAWIKI_PATH}/extensions/CirrusSearch/maintenance/ForceSearchIndex.php" --skipParse
+    docker exec "${STAGING_WIKI_CONTAINER}" php "${STAGING_MEDIAWIKI_PATH}/maintenance/run.php" runJobs --type cirrusSearchElasticaWrite --maxjobs 5000 --nothrottle
+    docker exec "${STAGING_WIKI_CONTAINER}" php "${STAGING_MEDIAWIKI_PATH}/extensions/CirrusSearch/maintenance/UpdateSuggesterIndex.php"
+    docker exec "${STAGING_WIKI_CONTAINER}" php "${STAGING_MEDIAWIKI_PATH}/maintenance/run.php" runJobs --type cirrusSearchElasticaWrite --maxjobs 5000 --nothrottle
 fi
 
 echo "LTS in-place staging started: ${STAGING_MEDIAWIKI_SERVER}"

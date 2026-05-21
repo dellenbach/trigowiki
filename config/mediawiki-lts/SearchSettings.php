@@ -41,7 +41,13 @@ wfLoadExtension( 'Elastica' );
 wfLoadExtension( 'CirrusSearch' );
 
 $wgSearchType = 'CirrusSearch';
-$wgCirrusSearchServers = [ getenv( 'MEDIAWIKI_SEARCH_HOST' ) ?: 'elasticsearch_staging_lts' ];
+$cirrusSearchHost = getenv( 'MEDIAWIKI_SEARCH_HOST' ) ?: 'elasticsearch_staging_lts';
+$wgCirrusSearchDefaultCluster = 'default';
+$wgCirrusSearchClusters = [
+    'default' => [ $cirrusSearchHost ],
+];
+$wgCirrusSearchWriteClusters = [ 'default' ];
+$wgCirrusSearchServers = [ $cirrusSearchHost ];
 $wgCirrusSearchUseCompletionSuggester = 'yes';
 $wgCirrusSearchPrefixSearchStartsWithAnyWord = true;
 $wgCirrusSearchCompletionSettings = 'fuzzy';

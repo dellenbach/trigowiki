@@ -110,6 +110,8 @@ Hinweis: Auf einzelnen Hosts kann unter strikter Seccomp-Policy bei Lua/Shellbox
 
 Hinweis: `RunSearch.php` ist als Smoke-Test auf diesem Host nicht geeignet, weil dafuer die PHP-Erweiterung `pcntl` benoetigt wird. Fuer Validierung weiter `UpdateSearchIndexConfig.php`, `ForceSearchIndex.php` und `CheckIndexes.php` verwenden.
 
+Hinweis: `ForceSearchIndex.php` erzeugt bei CirrusSearch REL1_43 `cirrusSearchElasticaWrite`-Jobs in der MediaWiki-Jobqueue. Nach einem Reindex muessen diese Jobs per `maintenance/run.php runJobs --type cirrusSearchElasticaWrite` abgearbeitet werden, sonst bleiben die Elasticsearch-Indizes leer oder unvollstaendig. Importierte Alt-Jobs aus der Produktionsdatenbank koennen mit der neuen CirrusSearch-Version inkompatibel sein; der LTS-Runner loescht deshalb vor dem Reindex alte `cirrusSearch%`-Jobs aus der Staging-Jobqueue.
+
 ## Akzeptanzkriterien fuer LTS-Staging
 
 - Container starten reproduzierbar aus Repo-Skripten.
