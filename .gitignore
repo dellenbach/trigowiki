@@ -1,0 +1,26 @@
+.env
+*.env
+*.log
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db
+
+# Lokale/runtime Daten nicht versehentlich neu aufnehmen.
+volumes/
+mediawiki/images/
+mediawiki/backup/
+mediawiki/includes/
+mediawiki/extensions/
+mediawiki/skins/
+mediawiki/mediawiki_prod/
+mediawiki/production/
+mediawiki/ressources/
+backup/
+restore/
+staging/
+tmp/
+*.bak
+*.tgz
+*.sql
+*.dump

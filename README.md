@@ -1,0 +1,76 @@
+# Trigowiki Betrieb
+
+Dieses Repository ist der Bauplan fuer Trigowiki. Es soll die Umgebung reproduzierbar machen, aber keine produktiven Inhalte, Uploads, Backups oder komplette MediaWiki-Releases versionieren.
+
+## Was ins Repository gehoert
+
+- `docker-compose.yml`: Services, Netzwerke, Volumes und Server-Mounts
+- `Dockerfile`: Image-Anpassungen, solange ein eigenes MediaWiki-Image gebaut wird
+- `docker-entrypoint.sh`: Container-Startlogik
+- `config/`: MediaWiki-, Nginx-, PHP-FPM-, Parsoid-, Supervisor- und Suchkonfiguration
+- `script/`: Wartungsskripte fuer Installation und Updates
+- `deploy-trigowiki.ps1`: Deployment-Hilfsskript von Windows aus
+- `docs/`: Inventar, Restore-, Upgrade- und Betriebsnotizen
+
+Eigene MediaWiki-Erweiterungen, Skins oder Patches sollen gezielt abgelegt werden, zum Beispiel unter `extensions-local/`, `skins-local/` oder `patches/`. Komplette Standard-Extensions oder MediaWiki-Core-Verzeichnisse gehoeren nicht in dieses Betriebsrepo, ausser eine lokale Aenderung ist dokumentiert und nicht anders reproduzierbar.
+
+## Was nicht ins Repository gehoert
+
+- Uploads, Bilder und Thumbnails: `mediawiki/images/`
+- Docker-, Datenbank- und Elasticsearch-Laufzeitdaten: `volumes/`
+- Backups, Dumps und Archive
+- MediaWiki-Core-Abzuege wie `mediawiki/includes/`
+- komplette produktive Extension-/Skin-Abzuege wie `mediawiki/extensions/` oder `mediawiki/skins/`
+- Logs, Caches, Temp- und Staging-Verzeichnisse
+
+Diese Daten muessen ueber Backup- und Restore-Prozesse gesichert werden, nicht ueber Git.
+
+## Produktion als Quelle
+
+Die produktive Umgebung auf `brisen` ist aktuell die Quelle der Wahrheit. Vor einem Upgrade wird sie inventarisiert und danach in drei Gruppen eingeteilt:
+
+1. **Versionieren**: Konfiguration, eigene Skripte, eigene Anpassungen, Runbooks.
+2. **Sichern, aber nicht versionieren**: Datenbank, Uploads, Config-Backups, produktive Daten.
+3. **Neu erzeugen oder ignorieren**: Thumbnails, Caches, Logs, Suchindizes, Temp-Dateien.
+
+Der aktuelle produktive Stand wurde in `docs/production-inventory.md` festgehalten.
+
+## Start und Wartung
+
+Start im Repository bzw. auf dem Server im Zielpfad:
+
+```bash
+docker compose up -d --build
+```
+
+Status und Logs:
+
+```bash
+docker compose ps
+docker compose logs -f --tail=200
+```
+
+MediaWiki-Update im Container:
+
+```bash
+docker exec -it mediawiki_wiki /script/update.sh
+```
+
+Erstinstallation der Datenbank:
+
+```bash
+docker exec -it mediawiki_wiki /script/install.sh <username> <password>
+```
+
+Hinweis: Auf `brisen` war in der bisherigen Diagnose direkte `docker`-Nutzung verlaesslicher als `docker compose`. Das Deployment-Skript muss vor dem Upgrade noch an die reale Zielumgebung angepasst werden.
+
+## Deployment von Windows
+
+Das bestehende Deployment-Skript ist weiterhin vorhanden:
+
+```powershell
+Set-ExecutionPolicy -Scope Process Bypass -Force
+.\deploy-trigowiki.ps1 -HostName brisen -UserName del -SkipRun
+```
+
+Vor produktiver Nutzung muessen Zielpfad, Benutzer und Compose-/Docker-Aufruf gegen die aktuelle Produktion geprueft werden.
