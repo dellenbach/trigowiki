@@ -22,7 +22,7 @@ Die produktive Konfiguration ist die aktuelle Wahrheit, aber sie ist nicht direk
 ## Nicht blind uebernommen
 
 - `LocalSettings.php`: weicht stark von `config/mediawiki/LocalSettings.php` ab und muss in einzelne, wartbare Konfigurationsbausteine zerlegt werden.
-- `nginx.conf`: die lokale Datei enthaelt bereits eine aufgeraeumte Appsmith-Proxy-Struktur mit `upstream appsmith_backend`. Sie ist nicht identisch mit Produktion, aber offenbar eine bereinigte Variante. Vor einem Commit muss entschieden werden, ob diese Variante produktiv gewollt ist.
+- `nginx.conf`: die lokale Datei enthaelt eine aufgeraeumte Variante der produktiven Appsmith-Proxy-Regeln mit `upstream appsmith_backend`, zentralen Proxy-Headern und einer WebSocket-Connection-Map. Die Syntax wurde im laufenden Wiki-Container mit `nginx -t` geprueft.
 
 ## Naechste Arbeiten
 
@@ -32,7 +32,7 @@ Die produktive Konfiguration ist die aktuelle Wahrheit, aber sie ist nicht direk
    - Upgrade Key
    - SMTP-Zugangsdaten, falls vorhanden
 2. Extension-Kompatibilitaetsmatrix fuer die aktuelle MediaWiki-LTS-Version erstellen.
-3. Entscheiden, ob `config/nginx/nginx.conf` in der lokalen bereinigten Form committed werden soll.
+3. Vor produktiver Ausrollung die bereinigte `config/nginx/nginx.conf` in einem Wartungsfenster gegen Trigowiki- und Appsmith-Routen testen.
 
 ## Secret-Stand
 
