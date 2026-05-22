@@ -10,7 +10,7 @@ $wgHooks['SearchAfterNoDirectMatch'][] = 'trigowikiInfixSearchAfterNoDirectMatch
 
 function trigowikiInfixSearchAfterNoDirectMatch( $term, &$title ) {
     $candidate = SpecialInfixSearch::findFirstTitleForTerm( $term, 1 );
-    if ( $candidate instanceof Title ) {
+    if ( $candidate ) {
         $title = $candidate;
         return false;
     }
@@ -51,7 +51,7 @@ class SpecialInfixSearch extends SpecialPage {
         $linkRenderer = $this->getLinkRenderer();
         $items = [];
         foreach ( $results as $row ) {
-            $title = Title::makeTitleSafe( (int)$row->page_namespace, $row->page_title );
+            $title = self::makeTitleSafe( (int)$row->page_namespace, $row->page_title );
             if ( !$title ) {
                 continue;
             }
@@ -139,7 +139,7 @@ class SpecialInfixSearch extends SpecialPage {
 
         $matches = [];
         foreach ( $res as $row ) {
-            $title = Title::makeTitleSafe( (int)$row->page_namespace, $row->page_title );
+            $title = self::makeTitleSafe( (int)$row->page_namespace, $row->page_title );
             if ( $title ) {
                 $matches[] = $title;
             }
@@ -151,6 +151,14 @@ class SpecialInfixSearch extends SpecialPage {
     private static function normalizeTerm( $term ) {
         $term = trim( preg_replace( '/\s+/', ' ', (string)$term ) );
         return trim( str_replace( [ '*', '"', "'" ], '', $term ) );
+    }
+
+    private static function makeTitleSafe( $namespace, $dbKey ) {
+        if ( class_exists( '\MediaWiki\Title\Title' ) ) {
+            return \MediaWiki\Title\Title::makeTitleSafe( $namespace, $dbKey );
+        }
+
+        return Title::makeTitleSafe( $namespace, $dbKey );
     }
 
     private static function getReadDb() {
