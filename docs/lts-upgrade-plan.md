@@ -90,7 +90,7 @@ Dieser Smoke laeuft bewusst ohne CirrusSearch und ohne historische Custom-/Legac
 
 ## Moderne Suche auf LTS-Staging
 
-Der LTS-Inplace-Runner zielt jetzt auf MediaWiki `1.45.3` und unterstuetzt eine moderne Suchstufe mit Elasticsearch 7.10.2 und den Erweiterungen Elastica/CirrusSearch (Branch `REL1_45`). OpenSearch sollte nicht als Drop-in-Ersatz fuer diese Staging-Konfiguration eingeplant werden, sondern nur separat getestet werden, falls ein CirrusSearch-/Elastica-Stand mit expliziter OpenSearch-Unterstuetzung verwendet wird.
+Der LTS-Inplace-Runner zielt jetzt auf MediaWiki `1.45.3` und unterstuetzt eine moderne Suchstufe mit OpenSearch 1.3.x und den Erweiterungen Elastica/CirrusSearch (Branch `REL1_45`). Elasticsearch 7.10.x wird von diesem CirrusSearch-Stand nur noch als deprecated gemeldet; OpenSearch ist deshalb der bevorzugte Staging-Backend-Typ.
 
 Aktivierung fuer den Lauf auf `8081`:
 
@@ -102,15 +102,17 @@ Was dabei passiert:
 
 - `extensions-lts/Elastica` und `extensions-lts/CirrusSearch` werden unter `/srv/mediawiki-staging` bereitgestellt.
 - Composer-Abhaengigkeiten fuer beide Erweiterungen werden im Runner automatisch installiert (`vendor/autoload.php` vorhanden).
-- Ein eigener Suchcontainer `elasticsearch_staging_lts` wird im `_staging`-Netz gestartet.
+- Ein eigener Suchcontainer `elasticsearch_staging_lts` wird im `_staging`-Netz gestartet; standardmaessig mit `opensearchproject/opensearch:1.3.20`.
 - `config/mediawiki-lts/SearchSettings.php` aktiviert CirrusSearch nur wenn `MEDIAWIKI_SEARCH_ENABLED=1` gesetzt ist.
 - Danach werden die Suchindizes per Cirrus-Maintenance-Skripten neu aufgebaut.
 
 Hinweis: Auf einzelnen Hosts kann unter strikter Seccomp-Policy bei Lua/Shellbox `proc_open()/posix_spawn` fehlschlagen. Der Staging-LTS-Runner startet den Wiki-Container deshalb mit `--security-opt seccomp=unconfined`, um Scribunto/Cirrus-Reindex stabil auszufuehren.
 
+Hinweis: Der OpenSearch-Staging-Container deaktiviert Disk-Watermark-Blocks, weil kleine Einzelhost-Volumes sonst bei knappen Host-Disks schnell `read_only_allow_delete` setzen und Cirrus-Schreibjobs mit `TOO_MANY_REQUESTS/12/disk usage exceeded flood-stage watermark` fehlschlagen.
+
 Hinweis: `RunSearch.php` ist als Smoke-Test auf diesem Host nicht geeignet, weil dafuer die PHP-Erweiterung `pcntl` benoetigt wird. Fuer Validierung weiter `UpdateSearchIndexConfig.php`, `ForceSearchIndex.php` und `CheckIndexes.php` verwenden.
 
-Hinweis: `ForceSearchIndex.php` erzeugt bei CirrusSearch REL1_45 `cirrusSearchElasticaWrite`-Jobs in der MediaWiki-Jobqueue. Nach einem Reindex muessen diese Jobs per `maintenance/run.php runJobs --type cirrusSearchElasticaWrite` abgearbeitet werden, sonst bleiben die Elasticsearch-Indizes leer oder unvollstaendig. Importierte Alt-Jobs aus der Produktionsdatenbank koennen mit der neuen CirrusSearch-Version inkompatibel sein; der LTS-Runner loescht deshalb vor dem Reindex alte `cirrusSearch%`-Jobs aus der Staging-Jobqueue.
+Hinweis: `ForceSearchIndex.php` erzeugt bei CirrusSearch REL1_45 `cirrusSearchElasticaWrite`-Jobs in der MediaWiki-Jobqueue. Nach einem Reindex muessen diese Jobs per `maintenance/run.php runJobs --type cirrusSearchElasticaWrite` abgearbeitet werden, sonst bleiben die OpenSearch-Indizes leer oder unvollstaendig. Importierte Alt-Jobs aus der Produktionsdatenbank koennen mit der neuen CirrusSearch-Version inkompatibel sein; der LTS-Runner loescht deshalb vor dem Reindex alte `cirrusSearch%`-Jobs aus der Staging-Jobqueue.
 
 ## Akzeptanzkriterien fuer LTS-Staging
 

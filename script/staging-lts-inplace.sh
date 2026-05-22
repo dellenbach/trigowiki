@@ -14,13 +14,14 @@ STAGING_ES_CONTAINER=${STAGING_ES_CONTAINER:-elasticsearch_staging}
 STAGING_SEARCH_CONTAINER=${STAGING_SEARCH_CONTAINER:-elasticsearch_staging_lts}
 STAGING_NETWORK=${STAGING_NETWORK:-trigowiki_staging}
 STAGING_WIKI_IMAGE=${STAGING_WIKI_IMAGE:-mediawiki:1.45.3}
-STAGING_SEARCH_IMAGE=${STAGING_SEARCH_IMAGE:-docker.elastic.co/elasticsearch/elasticsearch:7.10.2}
+STAGING_SEARCH_IMAGE=${STAGING_SEARCH_IMAGE:-opensearchproject/opensearch:1.3.20}
 STAGING_CONTAINER_HTTP_PORT=${STAGING_CONTAINER_HTTP_PORT:-80}
 STAGING_MEDIAWIKI_PATH=${STAGING_MEDIAWIKI_PATH:-/var/www/html}
 
 STAGING_DB_ROOT_PASSWORD=${STAGING_DB_ROOT_PASSWORD:-staging-root-change-me}
 STAGING_MEDIAWIKI_SECRET_KEY=${STAGING_MEDIAWIKI_SECRET_KEY:-staging-secret-change-me}
 RESET_STAGING_VOLUMES=${RESET_STAGING_VOLUMES:-1}
+RESET_STAGING_SEARCH_VOLUME=${RESET_STAGING_SEARCH_VOLUME:-${RESET_STAGING_VOLUMES}}
 IMPORT_PRODUCTION_DB=${IMPORT_PRODUCTION_DB:-1}
 RUN_STAGING_UPDATE=${RUN_STAGING_UPDATE:-1}
 ENABLE_MODERN_SEARCH=${ENABLE_MODERN_SEARCH:-0}
@@ -138,7 +139,10 @@ docker network inspect "${STAGING_NETWORK}" >/dev/null 2>&1 || docker network cr
 echo "Replacing old staging containers for in-place LTS test"
 docker rm -f "${STAGING_WIKI_CONTAINER}" "${STAGING_DB_CONTAINER}" "${STAGING_ES_CONTAINER}" "${STAGING_SEARCH_CONTAINER}" >/dev/null 2>&1 || true
 if [ "${RESET_STAGING_VOLUMES}" = "1" ]; then
-    docker volume rm -f mediawiki_mysql_staging esdata_staging "${STAGING_SEARCH_VOLUME}" >/dev/null 2>&1 || true
+    docker volume rm -f mediawiki_mysql_staging esdata_staging >/dev/null 2>&1 || true
+fi
+if [ "${RESET_STAGING_SEARCH_VOLUME}" = "1" ]; then
+    docker volume rm -f "${STAGING_SEARCH_VOLUME}" >/dev/null 2>&1 || true
 fi
 docker volume create mediawiki_mysql_staging >/dev/null
 if [ "${ENABLE_MODERN_SEARCH}" = "1" ]; then
@@ -175,17 +179,34 @@ else
 fi
 
 if [ "${ENABLE_MODERN_SEARCH}" = "1" ]; then
-    echo "Starting Elasticsearch 7.10 for modern CirrusSearch"
+    echo "Starting ${STAGING_SEARCH_IMAGE} for modern CirrusSearch"
+    search_data_path=/usr/share/elasticsearch/data
+    search_env_args=(
+        -e discovery.type=single-node
+    )
+    if [[ "${STAGING_SEARCH_IMAGE}" == opensearchproject/opensearch:* ]]; then
+        search_data_path=/usr/share/opensearch/data
+        search_env_args+=(
+            -e DISABLE_INSTALL_DEMO_CONFIG=true
+            -e DISABLE_SECURITY_PLUGIN=true
+            -e cluster.routing.allocation.disk.threshold_enabled=false
+            -e plugins.index_state_management.enabled=false
+            -e OPENSEARCH_JAVA_OPTS='-Xms512m -Xmx512m'
+        )
+    else
+        search_env_args+=(
+            -e xpack.security.enabled=false
+            -e ES_JAVA_OPTS='-Xms512m -Xmx512m'
+        )
+    fi
     docker run -d \
         --name "${STAGING_SEARCH_CONTAINER}" \
         --network "${STAGING_NETWORK}" \
-        -e discovery.type=single-node \
-        -e xpack.security.enabled=false \
-        -e ES_JAVA_OPTS='-Xms512m -Xmx512m' \
-        -v "${STAGING_SEARCH_VOLUME}:/usr/share/elasticsearch/data" \
+        "${search_env_args[@]}" \
+        -v "${STAGING_SEARCH_VOLUME}:${search_data_path}" \
         "${STAGING_SEARCH_IMAGE}" >/dev/null
 
-    echo "Waiting for Elasticsearch"
+    echo "Waiting for search backend"
     for attempt in $(seq 1 90); do
         if docker logs --tail 200 "${STAGING_SEARCH_CONTAINER}" 2>&1 | grep -q 'started'; then
             break
@@ -247,13 +268,13 @@ if [ "${ENABLE_MODERN_SEARCH}" = "1" ] && [ "${RUN_STAGING_REINDEX}" = "1" ]; th
     echo "Rebuilding CirrusSearch index on LTS staging"
     echo "Clearing stale CirrusSearch jobs from imported database"
     docker exec "${STAGING_DB_CONTAINER}" sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" wikidb -e "DELETE FROM job WHERE job_cmd LIKE '\''cirrusSearch%'\''"'
-    docker exec "${STAGING_WIKI_CONTAINER}" php "${STAGING_MEDIAWIKI_PATH}/extensions/CirrusSearch/maintenance/UpdateSearchIndexConfig.php" --reindexAndRemoveOk --indexIdentifier now
-    docker exec "${STAGING_WIKI_CONTAINER}" php "${STAGING_MEDIAWIKI_PATH}/extensions/CirrusSearch/maintenance/UpdateSearchIndexConfig.php"
-    docker exec "${STAGING_WIKI_CONTAINER}" php "${STAGING_MEDIAWIKI_PATH}/extensions/CirrusSearch/maintenance/ForceSearchIndex.php" --skipLinks --indexOnSkip
-    docker exec "${STAGING_WIKI_CONTAINER}" php "${STAGING_MEDIAWIKI_PATH}/extensions/CirrusSearch/maintenance/ForceSearchIndex.php" --skipParse
-    docker exec "${STAGING_WIKI_CONTAINER}" php "${STAGING_MEDIAWIKI_PATH}/maintenance/run.php" runJobs --type cirrusSearchElasticaWrite --maxjobs 5000 --nothrottle
-    docker exec "${STAGING_WIKI_CONTAINER}" php "${STAGING_MEDIAWIKI_PATH}/extensions/CirrusSearch/maintenance/UpdateSuggesterIndex.php"
-    docker exec "${STAGING_WIKI_CONTAINER}" php "${STAGING_MEDIAWIKI_PATH}/maintenance/run.php" runJobs --type cirrusSearchElasticaWrite --maxjobs 5000 --nothrottle
+    docker exec "${STAGING_WIKI_CONTAINER}" php -d memory_limit=1024M "${STAGING_MEDIAWIKI_PATH}/extensions/CirrusSearch/maintenance/UpdateSearchIndexConfig.php" --reindexAndRemoveOk --indexIdentifier now --ignoreIndexChanged
+    docker exec "${STAGING_WIKI_CONTAINER}" php -d memory_limit=1024M "${STAGING_MEDIAWIKI_PATH}/extensions/CirrusSearch/maintenance/UpdateSearchIndexConfig.php" --ignoreIndexChanged
+    docker exec "${STAGING_WIKI_CONTAINER}" php -d memory_limit=1024M "${STAGING_MEDIAWIKI_PATH}/extensions/CirrusSearch/maintenance/ForceSearchIndex.php" --skipLinks --indexOnSkip
+    docker exec "${STAGING_WIKI_CONTAINER}" php -d memory_limit=1024M "${STAGING_MEDIAWIKI_PATH}/extensions/CirrusSearch/maintenance/ForceSearchIndex.php" --skipParse
+    docker exec "${STAGING_WIKI_CONTAINER}" php -d memory_limit=1024M "${STAGING_MEDIAWIKI_PATH}/maintenance/run.php" runJobs --type cirrusSearchElasticaWrite --maxjobs 5000 --nothrottle
+    docker exec "${STAGING_WIKI_CONTAINER}" php -d memory_limit=1024M "${STAGING_MEDIAWIKI_PATH}/extensions/CirrusSearch/maintenance/UpdateSuggesterIndex.php"
+    docker exec "${STAGING_WIKI_CONTAINER}" php -d memory_limit=1024M "${STAGING_MEDIAWIKI_PATH}/maintenance/run.php" runJobs --type cirrusSearchElasticaWrite --maxjobs 5000 --nothrottle
 fi
 
 echo "LTS in-place staging started: ${STAGING_MEDIAWIKI_SERVER}"

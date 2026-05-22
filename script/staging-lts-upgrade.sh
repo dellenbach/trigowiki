@@ -35,6 +35,7 @@ bash "${SCRIPT_DIR}/staging-lts-inplace.sh"
 echo "Phase 3/3: upgrading existing staging database to MediaWiki 1.45.3"
 STAGING_WIKI_IMAGE=mediawiki:1.45.3 \
 RESET_STAGING_VOLUMES=0 \
+RESET_STAGING_SEARCH_VOLUME=1 \
 IMPORT_PRODUCTION_DB=0 \
 ENABLE_MODERN_SEARCH=${ENABLE_MODERN_SEARCH:-1} \
 bash "${SCRIPT_DIR}/staging-lts-inplace.sh"
