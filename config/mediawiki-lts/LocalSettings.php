@@ -62,14 +62,20 @@ $wgHooks['BeforePageDisplay'][] = static function ( OutputPage $out, Skin $skin 
 .mw-wiki-logo { background-image: url('{$wgLogo}') !important; background-size: 135px auto; }
 html,
 body,
+body :not(pre):not(code):not(kbd):not(samp),
 input,
 textarea,
 select,
 button,
 .mw-body,
 .mw-parser-output,
+.mw-parser-output *,
 .vector-body,
 .mw-page-title-main,
+.mw-first-heading,
+.firstHeading,
+.mw-heading,
+.mw-headline,
 h1,
 h2,
 h3,
@@ -83,8 +89,17 @@ h6,
 #p-views,
 #p-cactions,
 #footer,
-.oo-ui-widget {
-    font-family: Arial, Helvetica, sans-serif;
+.oo-ui-widget,
+.oo-ui-widget *,
+.ve-ce-surface,
+.ve-ce-documentNode,
+.ve-ce-branchNode,
+.ve-ce-contentBranchNode,
+.ve-ce-attachedRootNode,
+.ve-ce-paragraphNode,
+.ve-ce-headingNode,
+.ve-ce-headingNode * {
+    font-family: Arial, Helvetica, sans-serif !important;
 }
 CSS
     );

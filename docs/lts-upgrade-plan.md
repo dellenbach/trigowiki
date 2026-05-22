@@ -90,7 +90,7 @@ Dieser Smoke laeuft bewusst ohne CirrusSearch und ohne historische Custom-/Legac
 
 ## Moderne Suche auf LTS-Staging
 
-Der LTS-Inplace-Runner unterstuetzt jetzt optional eine moderne Suchstufe mit Elasticsearch 7.10.2 und den Erweiterungen Elastica/CirrusSearch (Branch `REL1_43`).
+Der LTS-Inplace-Runner unterstuetzt jetzt optional eine moderne Suchstufe mit Elasticsearch 7.10.2 und den Erweiterungen Elastica/CirrusSearch (Branch `REL1_43`). Die CirrusSearch-Dokumentation fuer diesen Branch nennt Elasticsearch 7.10 als unterstuetzte Zielversion. OpenSearch sollte deshalb nicht als Drop-in-Ersatz fuer diese Staging-Konfiguration eingeplant werden, sondern nur separat getestet werden, falls spaeter ein CirrusSearch-/Elastica-Stand mit expliziter OpenSearch-Unterstuetzung verwendet wird.
 
 Aktivierung fuer den Lauf auf `8081`:
 
