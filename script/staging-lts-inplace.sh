@@ -13,7 +13,7 @@ STAGING_WIKI_CONTAINER=${STAGING_WIKI_CONTAINER:-mediawiki_wiki_staging}
 STAGING_ES_CONTAINER=${STAGING_ES_CONTAINER:-elasticsearch_staging}
 STAGING_SEARCH_CONTAINER=${STAGING_SEARCH_CONTAINER:-elasticsearch_staging_lts}
 STAGING_NETWORK=${STAGING_NETWORK:-trigowiki_staging}
-STAGING_WIKI_IMAGE=${STAGING_WIKI_IMAGE:-mediawiki:1.43}
+STAGING_WIKI_IMAGE=${STAGING_WIKI_IMAGE:-mediawiki:1.45.3}
 STAGING_SEARCH_IMAGE=${STAGING_SEARCH_IMAGE:-docker.elastic.co/elasticsearch/elasticsearch:7.10.2}
 STAGING_CONTAINER_HTTP_PORT=${STAGING_CONTAINER_HTTP_PORT:-80}
 STAGING_MEDIAWIKI_PATH=${STAGING_MEDIAWIKI_PATH:-/var/www/html}
@@ -25,8 +25,9 @@ IMPORT_PRODUCTION_DB=${IMPORT_PRODUCTION_DB:-1}
 RUN_STAGING_UPDATE=${RUN_STAGING_UPDATE:-1}
 ENABLE_MODERN_SEARCH=${ENABLE_MODERN_SEARCH:-0}
 RUN_STAGING_REINDEX=${RUN_STAGING_REINDEX:-1}
-STAGING_ELASTICA_BRANCH=${STAGING_ELASTICA_BRANCH:-REL1_43}
-STAGING_CIRRUS_BRANCH=${STAGING_CIRRUS_BRANCH:-REL1_43}
+STAGING_ELASTICA_BRANCH=${STAGING_ELASTICA_BRANCH:-REL1_45}
+STAGING_CIRRUS_BRANCH=${STAGING_CIRRUS_BRANCH:-REL1_45}
+STAGING_INTERWIKI_BRANCH=${STAGING_INTERWIKI_BRANCH:-REL1_45}
 STAGING_SEARCH_VOLUME=${STAGING_SEARCH_VOLUME:-esdata_lts_staging}
 RUN_STAGING_EXTENSION_COMPOSER=${RUN_STAGING_EXTENSION_COMPOSER:-1}
 
@@ -50,7 +51,7 @@ ensure_lts_extension() {
         -v "${STAGING_ROOT}/extensions-lts:/work" \
         --entrypoint sh \
         alpine/git:2.45.2 \
-        -lc "cd '/work/${target_name}' && git fetch --depth 1 origin '${branch}' && git checkout -f '${branch}' && git reset --hard FETCH_HEAD" >/dev/null
+        -lc "cd '/work/${target_name}' && git fetch --depth 1 origin '${branch}' && git checkout -B '${branch}' FETCH_HEAD && git reset --hard FETCH_HEAD" >/dev/null
 }
 
 ensure_extension_vendor() {
@@ -70,7 +71,7 @@ ensure_extension_vendor() {
     docker run --rm \
         -v "${extension_dir}:/app" \
         composer:2 \
-        install --no-dev --no-interaction --prefer-dist --ignore-platform-reqs >/dev/null
+        update --no-dev --no-interaction --prefer-dist --ignore-platform-reqs >/dev/null
 
     if [ ! -f "${extension_dir}/vendor/autoload.php" ]; then
         echo "Composer dependencies missing for ${extension_name} after install" >&2
@@ -109,6 +110,13 @@ else
     docker run --rm -v "${STAGING_ROOT}/images:/images" --entrypoint sh "${STAGING_WIKI_IMAGE}" -c 'find /images -mindepth 1 -maxdepth 1 -exec rm -rf {} +; chmod 0777 /images'
 fi
 rsync -a --no-owner --no-group --delete "${PROD_ROOT}/images/" "${STAGING_ROOT}/images/"
+
+interwiki_mount_args=()
+if ! docker run --rm --entrypoint test "${STAGING_WIKI_IMAGE}" -f "${STAGING_MEDIAWIKI_PATH}/extensions/Interwiki/extension.json"; then
+    echo "Preparing Interwiki extension for MediaWiki LTS"
+    ensure_lts_extension "https://gerrit.wikimedia.org/r/mediawiki/extensions/Interwiki" "${STAGING_INTERWIKI_BRANCH}" "${STAGING_ROOT}/extensions-lts/Interwiki"
+    interwiki_mount_args=( -v "${STAGING_ROOT}/extensions-lts/Interwiki:${STAGING_MEDIAWIKI_PATH}/extensions/Interwiki:ro" )
+fi
 
 if [ "${ENABLE_MODERN_SEARCH}" = "1" ]; then
     echo "Preparing CirrusSearch extensions for MediaWiki LTS"
@@ -215,6 +223,7 @@ docker run -d \
     -v "${STAGING_ROOT}/config-lts/InfixTitleSearch.php:${STAGING_MEDIAWIKI_PATH}/InfixTitleSearch.php:ro" \
     -v "${STAGING_ROOT}/config-lts/RecentBreadcrumbs.php:${STAGING_MEDIAWIKI_PATH}/RecentBreadcrumbs.php:ro" \
     -v "${STAGING_ROOT}/config-lts/SearchSettings.php:${STAGING_MEDIAWIKI_PATH}/SearchSettings.php:ro" \
+    "${interwiki_mount_args[@]}" \
     -v "${STAGING_ROOT}/extensions-lts/Elastica:${STAGING_MEDIAWIKI_PATH}/extensions/Elastica:ro" \
     -v "${STAGING_ROOT}/extensions-lts/CirrusSearch:${STAGING_MEDIAWIKI_PATH}/extensions/CirrusSearch:ro" \
     -v "${STAGING_ROOT}/images:${STAGING_MEDIAWIKI_PATH}/images" \

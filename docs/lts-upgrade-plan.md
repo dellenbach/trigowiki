@@ -90,7 +90,7 @@ Dieser Smoke laeuft bewusst ohne CirrusSearch und ohne historische Custom-/Legac
 
 ## Moderne Suche auf LTS-Staging
 
-Der LTS-Inplace-Runner unterstuetzt jetzt optional eine moderne Suchstufe mit Elasticsearch 7.10.2 und den Erweiterungen Elastica/CirrusSearch (Branch `REL1_43`). Die CirrusSearch-Dokumentation fuer diesen Branch nennt Elasticsearch 7.10 als unterstuetzte Zielversion. OpenSearch sollte deshalb nicht als Drop-in-Ersatz fuer diese Staging-Konfiguration eingeplant werden, sondern nur separat getestet werden, falls spaeter ein CirrusSearch-/Elastica-Stand mit expliziter OpenSearch-Unterstuetzung verwendet wird.
+Der LTS-Inplace-Runner zielt jetzt auf MediaWiki `1.45.3` und unterstuetzt eine moderne Suchstufe mit Elasticsearch 7.10.2 und den Erweiterungen Elastica/CirrusSearch (Branch `REL1_45`). OpenSearch sollte nicht als Drop-in-Ersatz fuer diese Staging-Konfiguration eingeplant werden, sondern nur separat getestet werden, falls ein CirrusSearch-/Elastica-Stand mit expliziter OpenSearch-Unterstuetzung verwendet wird.
 
 Aktivierung fuer den Lauf auf `8081`:
 
@@ -110,7 +110,7 @@ Hinweis: Auf einzelnen Hosts kann unter strikter Seccomp-Policy bei Lua/Shellbox
 
 Hinweis: `RunSearch.php` ist als Smoke-Test auf diesem Host nicht geeignet, weil dafuer die PHP-Erweiterung `pcntl` benoetigt wird. Fuer Validierung weiter `UpdateSearchIndexConfig.php`, `ForceSearchIndex.php` und `CheckIndexes.php` verwenden.
 
-Hinweis: `ForceSearchIndex.php` erzeugt bei CirrusSearch REL1_43 `cirrusSearchElasticaWrite`-Jobs in der MediaWiki-Jobqueue. Nach einem Reindex muessen diese Jobs per `maintenance/run.php runJobs --type cirrusSearchElasticaWrite` abgearbeitet werden, sonst bleiben die Elasticsearch-Indizes leer oder unvollstaendig. Importierte Alt-Jobs aus der Produktionsdatenbank koennen mit der neuen CirrusSearch-Version inkompatibel sein; der LTS-Runner loescht deshalb vor dem Reindex alte `cirrusSearch%`-Jobs aus der Staging-Jobqueue.
+Hinweis: `ForceSearchIndex.php` erzeugt bei CirrusSearch REL1_45 `cirrusSearchElasticaWrite`-Jobs in der MediaWiki-Jobqueue. Nach einem Reindex muessen diese Jobs per `maintenance/run.php runJobs --type cirrusSearchElasticaWrite` abgearbeitet werden, sonst bleiben die Elasticsearch-Indizes leer oder unvollstaendig. Importierte Alt-Jobs aus der Produktionsdatenbank koennen mit der neuen CirrusSearch-Version inkompatibel sein; der LTS-Runner loescht deshalb vor dem Reindex alte `cirrusSearch%`-Jobs aus der Staging-Jobqueue.
 
 ## Akzeptanzkriterien fuer LTS-Staging
 

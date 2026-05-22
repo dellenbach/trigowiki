@@ -12,18 +12,29 @@ export STAGING_MEDIAWIKI_SECRET_KEY
 export STAGING_MEDIAWIKI_PATH
 export STAGING_WIKI_CONTAINER
 
-echo "Phase 1/2: upgrading imported production dump to MediaWiki 1.35"
+echo "Phase 1/3: upgrading imported production dump to MediaWiki 1.35"
 STAGING_WIKI_IMAGE=mediawiki:1.35 \
 RESET_STAGING_VOLUMES=1 \
 IMPORT_PRODUCTION_DB=1 \
-"${SCRIPT_DIR}/staging-lts-inplace.sh"
+ENABLE_MODERN_SEARCH=0 \
+RUN_STAGING_REINDEX=0 \
+bash "${SCRIPT_DIR}/staging-lts-inplace.sh"
 
 echo "Cleaning legacy anonymous user rows after 1.35 actor migration"
 docker exec "${STAGING_WIKI_CONTAINER}" php "${STAGING_MEDIAWIKI_PATH}/maintenance/cleanupUsersWithNoId.php" --prefix 'Imported>' --assign
 docker exec "${STAGING_WIKI_CONTAINER}" php "${STAGING_MEDIAWIKI_PATH}/maintenance/update.php" --quick
 
-echo "Phase 2/2: upgrading existing staging database to MediaWiki 1.43"
+echo "Phase 2/3: upgrading existing staging database to MediaWiki 1.43"
 STAGING_WIKI_IMAGE=mediawiki:1.43 \
 RESET_STAGING_VOLUMES=0 \
 IMPORT_PRODUCTION_DB=0 \
-"${SCRIPT_DIR}/staging-lts-inplace.sh"
+ENABLE_MODERN_SEARCH=0 \
+RUN_STAGING_REINDEX=0 \
+bash "${SCRIPT_DIR}/staging-lts-inplace.sh"
+
+echo "Phase 3/3: upgrading existing staging database to MediaWiki 1.45.3"
+STAGING_WIKI_IMAGE=mediawiki:1.45.3 \
+RESET_STAGING_VOLUMES=0 \
+IMPORT_PRODUCTION_DB=0 \
+ENABLE_MODERN_SEARCH=${ENABLE_MODERN_SEARCH:-1} \
+bash "${SCRIPT_DIR}/staging-lts-inplace.sh"
