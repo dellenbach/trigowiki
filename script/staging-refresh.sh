@@ -14,12 +14,23 @@ STAGING_WIKI_CONTAINER=${STAGING_WIKI_CONTAINER:-mediawiki_wiki_staging}
 STAGING_ES_CONTAINER=${STAGING_ES_CONTAINER:-elasticsearch_staging}
 STAGING_NETWORK=${STAGING_NETWORK:-trigowiki_staging}
 STAGING_WIKI_IMAGE=${STAGING_WIKI_IMAGE:-trigowiki}
+STAGING_MEDIAWIKI_PATH=${STAGING_MEDIAWIKI_PATH:-/var/www/mediawiki}
 
 STAGING_DB_ROOT_PASSWORD=${STAGING_DB_ROOT_PASSWORD:-staging-root-change-me}
 STAGING_MEDIAWIKI_SECRET_KEY=${STAGING_MEDIAWIKI_SECRET_KEY:-staging-secret-change-me}
 RUN_STAGING_REINDEX=${RUN_STAGING_REINDEX:-1}
+ALLOW_STAGING_REINDEX_FAILURE=${ALLOW_STAGING_REINDEX_FAILURE:-1}
 RESET_STAGING_VOLUMES=${RESET_STAGING_VOLUMES:-1}
 BUILD_STAGING_IMAGE=${BUILD_STAGING_IMAGE:-1}
+
+run_staging_reindex() {
+    echo "Rebuilding staging search index"
+    docker exec "${STAGING_WIKI_CONTAINER}" php "${STAGING_MEDIAWIKI_PATH}/extensions/CirrusSearch/maintenance/updateSearchIndexConfig.php" --reindexAndRemoveOk --indexIdentifier now
+    docker exec "${STAGING_WIKI_CONTAINER}" php "${STAGING_MEDIAWIKI_PATH}/extensions/CirrusSearch/maintenance/updateSearchIndexConfig.php"
+    docker exec "${STAGING_WIKI_CONTAINER}" php "${STAGING_MEDIAWIKI_PATH}/extensions/CirrusSearch/maintenance/updateSuggesterIndex.php"
+    docker exec "${STAGING_WIKI_CONTAINER}" php "${STAGING_MEDIAWIKI_PATH}/extensions/CirrusSearch/maintenance/forceSearchIndex.php" --skipLinks --indexOnSkip
+    docker exec "${STAGING_WIKI_CONTAINER}" php "${STAGING_MEDIAWIKI_PATH}/extensions/CirrusSearch/maintenance/forceSearchIndex.php" --skipParse
+}
 
 current_user=$(id -un)
 if [ "${current_user}" != "${STAGING_SERVICE_USER}" ]; then
@@ -43,7 +54,12 @@ rsync -a --delete "${REPO_ROOT}/Ressourcen/" "${STAGING_ROOT}/Ressourcen/"
 chmod -R a+rX "${STAGING_ROOT}/Ressourcen"
 
 echo "Copying production file data to staging"
-rsync -a --delete "${PROD_ROOT}/images/" "${STAGING_ROOT}/images/"
+if docker ps --format '{{.Names}}' | grep -qx "${STAGING_WIKI_CONTAINER}"; then
+    docker exec "${STAGING_WIKI_CONTAINER}" sh -c "image_dir=/var/www/mediawiki/images; if [ ! -d \"\$image_dir\" ] && [ -d /var/www/html/images ]; then image_dir=/var/www/html/images; fi; if [ ! -d \"\$image_dir\" ] && [ -d /images ]; then image_dir=/images; fi; find \"\$image_dir\" -mindepth 1 -maxdepth 1 -exec rm -rf {} +; chown '$(id -u):$(id -g)' \"\$image_dir\""
+else
+    docker run --rm -v "${STAGING_ROOT}/images:/images" --entrypoint sh busybox:1.36 -c 'find /images -mindepth 1 -maxdepth 1 -exec rm -rf {} +; chmod 0777 /images'
+fi
+rsync -a --no-owner --no-group --delete "${PROD_ROOT}/images/" "${STAGING_ROOT}/images/"
 rsync -a --delete "${PROD_ROOT}/extensions/" "${STAGING_ROOT}/extensions/"
 rsync -a --delete "${PROD_ROOT}/skins/Vector/" "${STAGING_ROOT}/skins/Vector/"
 rsync -a --delete "${PROD_ROOT}/includes/" "${STAGING_ROOT}/includes/"
@@ -133,35 +149,39 @@ docker run -d \
     -e MEDIAWIKI_ENABLE_UPLOADS=1 \
     -e MEDIAWIKI_EXTENSION_VISUAL_EDITOR_ENABLED=1 \
     -e MEDIAWIKI_DEFAULT_SKIN=vector \
-    -v "${STAGING_ROOT}/config/LocalSettings.php:/var/www/mediawiki/LocalSettings.php" \
-    -v "${STAGING_ROOT}/config/ExtraLocalSettings.php:/var/www/mediawiki/ExtraLocalSettings.php" \
-    -v "${STAGING_ROOT}/config/Permissions.php:/var/www/mediawiki/Permissions.php" \
-    -v "${STAGING_ROOT}/config/Extensions.php:/var/www/mediawiki/Extensions.php" \
-    -v "${STAGING_ROOT}/config/UploadSettings.php:/var/www/mediawiki/UploadSettings.php" \
-    -v "${STAGING_ROOT}/config/EmbeddingSettings.php:/var/www/mediawiki/EmbeddingSettings.php" \
-    -v "${STAGING_ROOT}/config/CirrusSearchTuning.php:/var/www/mediawiki/CirrusSearchTuning.php" \
-    -v "${STAGING_ROOT}/config/InfixTitleSearch.php:/var/www/mediawiki/InfixTitleSearch.php" \
+    -v "${STAGING_ROOT}/config/LocalSettings.php:${STAGING_MEDIAWIKI_PATH}/LocalSettings.php" \
+    -v "${STAGING_ROOT}/config/ExtraLocalSettings.php:${STAGING_MEDIAWIKI_PATH}/ExtraLocalSettings.php" \
+    -v "${STAGING_ROOT}/config/Permissions.php:${STAGING_MEDIAWIKI_PATH}/Permissions.php" \
+    -v "${STAGING_ROOT}/config/Extensions.php:${STAGING_MEDIAWIKI_PATH}/Extensions.php" \
+    -v "${STAGING_ROOT}/config/UploadSettings.php:${STAGING_MEDIAWIKI_PATH}/UploadSettings.php" \
+    -v "${STAGING_ROOT}/config/EmbeddingSettings.php:${STAGING_MEDIAWIKI_PATH}/EmbeddingSettings.php" \
+    -v "${STAGING_ROOT}/config/CirrusSearchTuning.php:${STAGING_MEDIAWIKI_PATH}/CirrusSearchTuning.php" \
+    -v "${STAGING_ROOT}/config/InfixTitleSearch.php:${STAGING_MEDIAWIKI_PATH}/InfixTitleSearch.php" \
+    -v "${STAGING_ROOT}/config/RecentBreadcrumbs.php:${STAGING_MEDIAWIKI_PATH}/RecentBreadcrumbs.php" \
     -v "${STAGING_ROOT}/config/nginx.conf:/etc/nginx/nginx.conf" \
-    -v "${STAGING_ROOT}/images:/var/www/mediawiki/images" \
-    -v "${STAGING_ROOT}/Ressourcen:/var/www/mediawiki/resources/trigowiki:ro" \
-    -v "${STAGING_ROOT}/extensions:/var/www/mediawiki/extensions" \
-    -v "${STAGING_ROOT}/skins/Vector:/var/www/mediawiki/skins/Vector" \
-    -v "${STAGING_ROOT}/includes:/var/www/mediawiki/includes" \
+    -v "${STAGING_ROOT}/images:${STAGING_MEDIAWIKI_PATH}/images" \
+    -v "${STAGING_ROOT}/Ressourcen:${STAGING_MEDIAWIKI_PATH}/resources/trigowiki:ro" \
+    -v "${STAGING_ROOT}/extensions:${STAGING_MEDIAWIKI_PATH}/extensions" \
+    -v "${STAGING_ROOT}/skins/Vector:${STAGING_MEDIAWIKI_PATH}/skins/Vector" \
+    -v "${STAGING_ROOT}/includes:${STAGING_MEDIAWIKI_PATH}/includes" \
     "${STAGING_WIKI_IMAGE}" >/dev/null
+
+docker exec "${STAGING_WIKI_CONTAINER}" chown -R www-data:www-data "${STAGING_MEDIAWIKI_PATH}/images"
 
 echo "Waiting for staging wiki container"
 sleep 10
 
 echo "Running MediaWiki database update in staging"
-docker exec "${STAGING_WIKI_CONTAINER}" php /var/www/mediawiki/maintenance/update.php --quick
+docker exec "${STAGING_WIKI_CONTAINER}" php "${STAGING_MEDIAWIKI_PATH}/maintenance/update.php" --quick
 
 if [ "${RUN_STAGING_REINDEX}" = "1" ]; then
-    echo "Rebuilding staging search index"
-    docker exec "${STAGING_WIKI_CONTAINER}" php /var/www/mediawiki/extensions/CirrusSearch/maintenance/updateSearchIndexConfig.php --reindexAndRemoveOk --indexIdentifier now
-    docker exec "${STAGING_WIKI_CONTAINER}" php /var/www/mediawiki/extensions/CirrusSearch/maintenance/updateSearchIndexConfig.php
-    docker exec "${STAGING_WIKI_CONTAINER}" php /var/www/mediawiki/extensions/CirrusSearch/maintenance/updateSuggesterIndex.php
-    docker exec "${STAGING_WIKI_CONTAINER}" php /var/www/mediawiki/extensions/CirrusSearch/maintenance/forceSearchIndex.php --skipLinks --indexOnSkip
-    docker exec "${STAGING_WIKI_CONTAINER}" php /var/www/mediawiki/extensions/CirrusSearch/maintenance/forceSearchIndex.php --skipParse
+    if ! run_staging_reindex; then
+        if [ "${ALLOW_STAGING_REINDEX_FAILURE}" = "1" ]; then
+            echo "Warning: staging search reindex failed; continuing because ALLOW_STAGING_REINDEX_FAILURE=1." >&2
+        else
+            exit 1
+        fi
+    fi
 fi
 
 echo "Staging migration completed: ${STAGING_MEDIAWIKI_SERVER}"
