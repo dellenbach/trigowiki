@@ -4,7 +4,7 @@ if ( !defined( 'MEDIAWIKI' ) ) {
     exit;
 }
 
-$wgSitename = getenv( 'MEDIAWIKI_SITENAME' ) ?: 'Trigowiki Staging';
+$wgSitename = getenv( 'MEDIAWIKI_SITENAME' ) ?: 'Trigowiki';
 $wgSitename = preg_replace( '/\s+(?:LTS|Staging)$/', '', $wgSitename );
 $wgMetaNamespace = 'Trigowiki';
 
@@ -23,7 +23,7 @@ $wgEmergencyContact = getenv( 'MEDIAWIKI_EMERGENCY_CONTACT' ) ?: 'wiki@example.i
 $wgPasswordSender = getenv( 'MEDIAWIKI_PASSWORD_SENDER' ) ?: $wgEmergencyContact;
 
 $wgDBtype = getenv( 'MEDIAWIKI_DB_TYPE' ) ?: 'mysql';
-$dbHost = getenv( 'MEDIAWIKI_DB_HOST' ) ?: 'mediawiki_mysql_staging';
+$dbHost = getenv( 'MEDIAWIKI_DB_HOST' ) ?: 'mediawiki_mysql_production';
 $dbPort = getenv( 'MEDIAWIKI_DB_PORT' ) ?: '3306';
 $wgDBserver = $dbHost . ':' . $dbPort;
 $wgDBname = getenv( 'MEDIAWIKI_DB_NAME' ) ?: 'wikidb';

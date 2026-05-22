@@ -13,9 +13,14 @@ Der Cutover auf OpenResty ist erfolgt. Produktionssnapshot, Restore-Test und aus
 - `trigowiki_openresty` publiziert `0.0.0.0:80 -> 80/tcp`.
 - Der alte Container `mediawiki_wiki` ist gestoppt und bleibt als Rollback-Punkt vorhanden.
 - `appsmith` publiziert `0.0.0.0:8080 -> 80/tcp` und `0.0.0.0:8443 -> 443/tcp`.
-- `mediawiki_wiki_staging` publiziert `0.0.0.0:8081 -> 80/tcp`.
+- `mediawiki_wiki_production` publiziert `0.0.0.0:8081 -> 80/tcp`.
+- Die aktiven Wiki-Dateien liegen unter `/srv/mediawiki-production`.
+- `mediawiki_mysql_production` und `opensearch_production` laufen im Netzwerk `trigowiki_production`.
+- Der Wiki-Container nutzt fuer DB/OpenSearch derzeit die Container-IPs `172.20.0.2` und `172.20.0.3`; Hostnamen funktionieren im Container fuer PHP/curl nicht zuverlaessig (`getaddrinfo() thread failed to start`).
 - `/srv/openresty` existiert auf `brisen` und enthaelt die produktive OpenResty-Konfiguration.
 - `trigowiki_openresty_test` wurde nach erfolgreichem Cutover entfernt.
+- `/srv/mediawiki-staging`, `/srv/mediawiki_production` und das Docker-Netzwerk `trigowiki_staging` wurden entfernt.
+- Die alten Docker-Volumes `mediawiki_mysql_staging` und `esdata_lts_staging` wurden auf `mediawiki_mysql_production` und `opensearch_production_data` migriert und entfernt.
 
 ## Zielbild
 
@@ -35,7 +40,7 @@ Best practice ist nicht, alle Backends oeffentlich auf `0.0.0.0` zu publizieren.
 - Oeffentlich: nur OpenResty `0.0.0.0:80` und optional `0.0.0.0:443`.
 - Wiki Backend: Docker-intern per Containername oder hostseitig `127.0.0.1:8082`.
 - Appsmith Backend: Docker-intern per Containername oder hostseitig `127.0.0.1:8080`.
-- Staging bleibt vorerst auf `8081`, bis Produktion umgestellt ist.
+- Das Wiki-Backend bleibt vorerst auf `8081`, bis direkte Backend-Ports reduziert werden.
 
 Wenn Appsmith weiterhin direkt erreichbar bleiben muss, kann `8080` temporaer bleiben. Als Ziel sollte der direkte Zugriff aber entfallen, damit der Proxy alle Header, WebSocket- und URL-Regeln kontrolliert.
 

@@ -8,15 +8,20 @@ Der Cutover auf das neue MediaWiki 1.45.3 hinter OpenResty ist erfolgt. Die wich
 
 ## Was aktuell gut aussieht
 
-- Das neue Wiki laeuft mit `mediawiki:1.45.3` weiterhin technisch im Container `mediawiki_wiki_staging` auf `http://brisen:8081` und wird produktiv ueber OpenResty auf Port `80` bedient.
+- Das neue Wiki laeuft mit `mediawiki:1.45.3` im Container `mediawiki_wiki_production` auf `http://brisen:8081` und wird produktiv ueber OpenResty auf Port `80` bedient.
+- Die aktiven Dateien liegen unter `/srv/mediawiki-production`.
+- Die aktive Produktions-Datenbank laeuft als `mediawiki_mysql_production`, der Suchcontainer als `opensearch_production`.
+- Die aktiven Docker-Volumes heissen `mediawiki_mysql_production` und `opensearch_production_data`; alte `*staging*`-Volumes wurden entfernt.
+- Der Wiki-Container verwendet fuer DB/OpenSearch aktuell die Container-IPs `172.20.0.2` und `172.20.0.3`, weil PHP/curl im Container auf diesem Docker-Host bei Docker-DNS-Namen mit `getaddrinfo() thread failed to start` scheitert.
 - OpenResty laeuft als `trigowiki_openresty` auf `0.0.0.0:80 -> 80/tcp`.
 - Der alte Produktionscontainer `mediawiki_wiki` ist gestoppt und bleibt als Rollback-Punkt vorhanden.
-- Suche laeuft in Staging mit CirrusSearch/Elastica `REL1_45` und OpenSearch `1.3.20`.
+- Suche laeuft in Produktion mit CirrusSearch/Elastica `REL1_45` und OpenSearch `1.3.20`.
 - OpenSearch-Health war gruen: ein Node, alle Shards aktiv, keine unassigned Shards.
 - CirrusSearch `CheckIndexes` meldete die geprueften Indizes/Shards als `ok`.
 - HTTP-Smokes fuer Startseite und Suche lieferten `200`.
 - Die zuletzt geprueften Wiki-Logs zeigten keine neuen Fatal-/Exception-/Error-Treffer.
-- Staging-Snapshots existieren unter `/srv/mediawiki-staging/backup/snapshots`.
+- Der alte Pfad `/srv/mediawiki-staging` wurde entfernt.
+- Staging-Container, das Netzwerk `trigowiki_staging` und die alten Staging-Volumes wurden entfernt.
 - Der Host wurde bereinigt; `/` hatte nach den letzten Pruefungen ca. 18 GB frei.
 - Produktionssnapshot `20260522T141847Z` wurde erstellt und archivseitig validiert.
 - Restore-Test des SQL-Dumps in einem isolierten MySQL-5.7-Container war erfolgreich.
@@ -26,7 +31,7 @@ Der Cutover auf das neue MediaWiki 1.45.3 hinter OpenResty ist erfolgt. Die wich
 
 1. Host-Ressourcen muessen weiter stabil bleiben.
    - OpenSearch-Reindex und MediaWiki-Dumps brauchen temporaer deutlich mehr Speicherplatz.
-   - Disk-Watermark-Probleme wurden in Staging bereits gesehen und fuer OpenSearch entschaerft.
+   - Disk-Watermark-Probleme wurden bereits gesehen und fuer OpenSearch entschaerft.
    - Der Host-Fuellstand lag nach dem Cutover bei ca. 18 GB frei.
 
 2. Produktionsbackup muss noch in den Regelbetrieb.
@@ -39,6 +44,8 @@ Der Cutover auf das neue MediaWiki 1.45.3 hinter OpenResty ist erfolgt. Die wich
 
 4. Alte Produktionsdienste erst nach Beobachtungszeit entfernen.
    - `mediawiki_wiki`, `mediawiki_mysql` und `11f951d24998_elasticsearch` bleiben vorerst fuer Rollback bestehen.
+   - Die neuen Container heissen `mediawiki_wiki_production`, `mediawiki_mysql_production` und `opensearch_production`.
+   - Bei einer Neuerstellung von DB/Search muessen die IPs des Wiki-Containers kontrolliert oder entsprechend neu gesetzt werden.
 
 ## Produktionsbackup
 

@@ -6,8 +6,8 @@ REM Einfaches Windows-Backup fuer das neue Trigowiki auf brisen.
 REM Sichert wie das alte Backup: Datenbankdump plus Uploads/Config.
 
 set "SSH_TARGET=trigowikisvc@brisen"
-set "REMOTE_ROOT=/srv/mediawiki-staging"
-set "DB_CONTAINER=mediawiki_mysql_staging"
+set "REMOTE_ROOT=/srv/mediawiki-production"
+set "DB_CONTAINER=mediawiki_mysql_production"
 set "DB_NAME=wikidb"
 set "BACKUP_DIR=\\trigonet.local\DFS\SQL-Backup_trigonet.local\BRISEN\Trigowiki_Backup\new-wiki"
 
