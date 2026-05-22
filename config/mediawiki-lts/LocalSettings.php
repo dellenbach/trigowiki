@@ -39,7 +39,7 @@ $wgMemCachedServers = [];
 
 $wgEnableUploads = getenv( 'MEDIAWIKI_ENABLE_UPLOADS' ) === '1';
 $wgUploadPath = '/images';
-$wgUploadDirectory = '/images';
+$wgUploadDirectory = "$IP/images";
 $wgUploadSizeWarning = false;
 $wgUseImageMagick = true;
 $wgImageMagickConvertCommand = '/usr/bin/convert';

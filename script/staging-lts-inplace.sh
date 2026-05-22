@@ -210,7 +210,7 @@ docker run -d \
     -v "${STAGING_ROOT}/config-lts/SearchSettings.php:${STAGING_MEDIAWIKI_PATH}/SearchSettings.php:ro" \
     -v "${STAGING_ROOT}/extensions-lts/Elastica:${STAGING_MEDIAWIKI_PATH}/extensions/Elastica:ro" \
     -v "${STAGING_ROOT}/extensions-lts/CirrusSearch:${STAGING_MEDIAWIKI_PATH}/extensions/CirrusSearch:ro" \
-    -v "${STAGING_ROOT}/images:/images" \
+    -v "${STAGING_ROOT}/images:${STAGING_MEDIAWIKI_PATH}/images" \
     -v "${STAGING_ROOT}/Ressourcen:${STAGING_MEDIAWIKI_PATH}/resources/trigowiki:ro" \
     "${STAGING_WIKI_IMAGE}" >/dev/null
 
