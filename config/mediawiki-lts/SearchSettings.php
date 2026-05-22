@@ -39,6 +39,9 @@ if ( file_exists( $elasticaAutoload ) ) {
 
 wfLoadExtension( 'Elastica' );
 wfLoadExtension( 'CirrusSearch' );
+if ( file_exists( "$IP/extensions/AdvancedSearch/extension.json" ) ) {
+    wfLoadExtension( 'AdvancedSearch' );
+}
 
 $wgSearchType = 'CirrusSearch';
 $cirrusSearchHost = getenv( 'MEDIAWIKI_SEARCH_HOST' ) ?: 'elasticsearch_staging_lts';

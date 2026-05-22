@@ -29,6 +29,8 @@ RUN_STAGING_REINDEX=${RUN_STAGING_REINDEX:-1}
 STAGING_ELASTICA_BRANCH=${STAGING_ELASTICA_BRANCH:-REL1_45}
 STAGING_CIRRUS_BRANCH=${STAGING_CIRRUS_BRANCH:-REL1_45}
 STAGING_INTERWIKI_BRANCH=${STAGING_INTERWIKI_BRANCH:-REL1_45}
+STAGING_TIMEDMEDIAHANDLER_BRANCH=${STAGING_TIMEDMEDIAHANDLER_BRANCH:-REL1_45}
+STAGING_ADVANCEDSEARCH_BRANCH=${STAGING_ADVANCEDSEARCH_BRANCH:-REL1_45}
 STAGING_SEARCH_VOLUME=${STAGING_SEARCH_VOLUME:-esdata_lts_staging}
 RUN_STAGING_EXTENSION_COMPOSER=${RUN_STAGING_EXTENSION_COMPOSER:-1}
 
@@ -119,12 +121,23 @@ if ! docker run --rm --entrypoint test "${STAGING_WIKI_IMAGE}" -f "${STAGING_MED
     interwiki_mount_args=( -v "${STAGING_ROOT}/extensions-lts/Interwiki:${STAGING_MEDIAWIKI_PATH}/extensions/Interwiki:ro" )
 fi
 
+extra_extension_mount_args=()
+if ! docker run --rm --entrypoint test "${STAGING_WIKI_IMAGE}" -f "${STAGING_MEDIAWIKI_PATH}/extensions/TimedMediaHandler/extension.json"; then
+    echo "Preparing TimedMediaHandler extension for MediaWiki LTS"
+    ensure_lts_extension "https://gerrit.wikimedia.org/r/mediawiki/extensions/TimedMediaHandler" "${STAGING_TIMEDMEDIAHANDLER_BRANCH}" "${STAGING_ROOT}/extensions-lts/TimedMediaHandler"
+    ensure_extension_vendor "${STAGING_ROOT}/extensions-lts/TimedMediaHandler"
+    extra_extension_mount_args+=( -v "${STAGING_ROOT}/extensions-lts/TimedMediaHandler:${STAGING_MEDIAWIKI_PATH}/extensions/TimedMediaHandler:ro" )
+fi
+
 if [ "${ENABLE_MODERN_SEARCH}" = "1" ]; then
     echo "Preparing CirrusSearch extensions for MediaWiki LTS"
     ensure_lts_extension "https://gerrit.wikimedia.org/r/mediawiki/extensions/Elastica" "${STAGING_ELASTICA_BRANCH}" "${STAGING_ROOT}/extensions-lts/Elastica"
     ensure_lts_extension "https://gerrit.wikimedia.org/r/mediawiki/extensions/CirrusSearch" "${STAGING_CIRRUS_BRANCH}" "${STAGING_ROOT}/extensions-lts/CirrusSearch"
+    ensure_lts_extension "https://gerrit.wikimedia.org/r/mediawiki/extensions/AdvancedSearch" "${STAGING_ADVANCEDSEARCH_BRANCH}" "${STAGING_ROOT}/extensions-lts/AdvancedSearch"
     ensure_extension_vendor "${STAGING_ROOT}/extensions-lts/Elastica"
     ensure_extension_vendor "${STAGING_ROOT}/extensions-lts/CirrusSearch"
+    ensure_extension_vendor "${STAGING_ROOT}/extensions-lts/AdvancedSearch"
+    extra_extension_mount_args+=( -v "${STAGING_ROOT}/extensions-lts/AdvancedSearch:${STAGING_MEDIAWIKI_PATH}/extensions/AdvancedSearch:ro" )
 fi
 
 dump_file="${STAGING_ROOT}/backup/wikidb-staging-lts.sql"
@@ -245,6 +258,7 @@ docker run -d \
     -v "${STAGING_ROOT}/config-lts/RecentBreadcrumbs.php:${STAGING_MEDIAWIKI_PATH}/RecentBreadcrumbs.php:ro" \
     -v "${STAGING_ROOT}/config-lts/SearchSettings.php:${STAGING_MEDIAWIKI_PATH}/SearchSettings.php:ro" \
     "${interwiki_mount_args[@]}" \
+    "${extra_extension_mount_args[@]}" \
     -v "${STAGING_ROOT}/extensions-lts/Elastica:${STAGING_MEDIAWIKI_PATH}/extensions/Elastica:ro" \
     -v "${STAGING_ROOT}/extensions-lts/CirrusSearch:${STAGING_MEDIAWIKI_PATH}/extensions/CirrusSearch:ro" \
     -v "${STAGING_ROOT}/images:${STAGING_MEDIAWIKI_PATH}/images" \

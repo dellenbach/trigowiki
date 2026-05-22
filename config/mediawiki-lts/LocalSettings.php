@@ -114,12 +114,22 @@ $wgGroupPermissions['*']['read'] = false;
 wfLoadExtension( 'Cite' );
 wfLoadExtension( 'ConfirmEdit' );
 wfLoadExtension( 'Gadgets' );
+wfLoadExtension( 'ImageMap' );
 wfLoadExtension( 'Interwiki' );
 wfLoadExtension( 'ParserFunctions' );
 wfLoadExtension( 'PdfHandler' );
 wfLoadExtension( 'Scribunto' );
 wfLoadExtension( 'SyntaxHighlight_GeSHi' );
 wfLoadExtension( 'TemplateData' );
+if ( file_exists( "$IP/extensions/TimedMediaHandler/extension.json" ) ) {
+    wfLoadExtension( 'TimedMediaHandler' );
+    $wgEnableTranscode = false;
+    $wgJobTypesExcludedFromDefaultQueue[] = 'webVideoTranscode';
+    $wgJobTypesExcludedFromDefaultQueue[] = 'webVideoTranscodePrioritized';
+    if ( file_exists( '/usr/bin/ffmpeg' ) ) {
+        $wgFFmpegLocation = '/usr/bin/ffmpeg';
+    }
+}
 wfLoadExtension( 'VisualEditor' );
 wfLoadExtension( 'WikiEditor' );
 
