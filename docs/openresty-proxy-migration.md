@@ -52,7 +52,7 @@ sudo install -d -o openrestysvc -g openrestysvc /srv/openresty/config /srv/openr
 
 Hinweis: Port `80` wird bei Docker-Publishing durch den Docker-Daemon gebunden. Der Host-User `openrestysvc` kann den Container verwalten, wenn er in der Docker-Gruppe ist. Innerhalb des Containers sollte OpenResty Worker-Prozesse unprivilegiert laufen lassen; der Container selbst braucht fuer `80:80` nicht zwingend als Host-root gestartet zu werden, weil Docker das Port-Binding uebernimmt.
 
-Aktueller Zwischenstand: `/srv/openresty` ist fuer den Testlauf angelegt, gehoert aber noch `del`. `openrestysvc` wurde noch nicht angelegt. Vor dem produktiven Cutover sollte der Besitzer auf `openrestysvc` umgestellt werden.
+Aktueller Zwischenstand: `openrestysvc` ist auf `brisen` angelegt und Mitglied der Docker-Gruppe. `/srv/openresty`, `/srv/openresty/config`, `/srv/openresty/logs` und `/srv/openresty/cache` gehoeren `openrestysvc:openrestysvc`; Schreibrechte wurden mit UID/GID `999:997` erfolgreich getestet.
 
 ## OpenResty-Konfiguration
 
