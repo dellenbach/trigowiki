@@ -6,17 +6,16 @@ Stand: 2026-05-22
 
 Die Zielarchitektur ist sinnvoll: Appsmith, Trigowiki und Reverse Proxy werden getrennt betrieben. Das reduziert Kopplung, macht den Wiki-Container einfacher und erlaubt spaeter saubere Updates von Proxy, Wiki und Appsmith unabhaengig voneinander.
 
-Der Cutover sollte trotz vorbereiteter Testinstanz erst im Wartungsfenster erfolgen. Produktionssnapshot, Restore-Test und ausreichend freier Speicher sind jetzt nachgewiesen; offen bleibt ein finales Cutover-Runbook und der Regelbetrieb fuer Backups.
+Der Cutover auf OpenResty ist erfolgt. Produktionssnapshot, Restore-Test und ausreichend freier Speicher wurden vorher nachgewiesen; offen bleibt der Regelbetrieb fuer Backups und das spaetere Reduzieren direkter Backend-Ports.
 
 ## Ist-Zustand
 
-- `mediawiki_wiki` publiziert `0.0.0.0:80 -> 8080/tcp`.
-- Im Wiki-Container laeuft Nginx und routet MediaWiki sowie Appsmith-Pfade.
+- `trigowiki_openresty` publiziert `0.0.0.0:80 -> 80/tcp`.
+- Der alte Container `mediawiki_wiki` ist gestoppt und bleibt als Rollback-Punkt vorhanden.
 - `appsmith` publiziert `0.0.0.0:8080 -> 80/tcp` und `0.0.0.0:8443 -> 443/tcp`.
 - `mediawiki_wiki_staging` publiziert `0.0.0.0:8081 -> 80/tcp`.
-- `mediawiki_wiki` und `appsmith` liegen aktuell in verschiedenen Docker-Netzwerken.
-- `/srv/openresty` existiert auf `brisen` und enthaelt die generierte Testkonfiguration.
-- `trigowiki_openresty_test` laeuft testweise auf `0.0.0.0:8088 -> 80/tcp`.
+- `/srv/openresty` existiert auf `brisen` und enthaelt die produktive OpenResty-Konfiguration.
+- `trigowiki_openresty_test` wurde nach erfolgreichem Cutover entfernt.
 
 ## Zielbild
 
@@ -73,6 +72,13 @@ script/prepare-openresty.sh
 ```
 
 Der Testlauf generiert daraus `/srv/openresty/config/nginx.conf`. Auf dem aktuellen Docker-Host muss die Docker-Bridge-IP explizit als `HOST_GATEWAY` gesetzt werden, da `host-gateway` nicht unterstuetzt wird.
+
+Produktiv zeigt die Konfiguration aktuell auf:
+
+```text
+trigowiki_backend -> host.docker.internal:8081
+appsmith_backend  -> host.docker.internal:8080
+```
 
 Routing-Regeln:
 
@@ -140,11 +146,13 @@ curl -H 'Host: trigowiki.trigonet.local' http://localhost:8088/
 curl -H 'Host: appsmith.trigonet.local' http://localhost:8088/
 ```
 
-Aktueller Teststand:
+Aktueller Produktionsstand:
 
 - OpenResty-Konfiguration: Syntax `ok`.
-- `Host: trigowiki.trigonet.local` `/`: HTTP `301`.
+- `Host: trigowiki.trigonet.local` `/`: HTTP `200`.
 - `Host: trigowiki.trigonet.local` Suche `postgres`: HTTP `200`.
+- `Host: trigowiki.trigonet.local` Suche `gres` mit `go=Seite`: HTTP `200`.
+- `Host: trigowiki.trigonet.local` Bildauslieferung: HTTP `200`.
 - `Host: trigowiki.trigonet.local` `/app`: HTTP `200`.
 - `Host: appsmith.trigonet.local` `/`: HTTP `200`.
 
@@ -162,6 +170,8 @@ docker logs <new-wiki-container> --tail 200
 ```
 
 ### Phase 3: Cutover im Wartungsfenster
+
+Status: erledigt am 2026-05-22. Es wurde kein neuer Snapshot erstellt, weil seit Snapshot `20260522T141847Z` keine Produktionsaenderungen mehr erfolgt waren.
 
 1. Schreibzugriffe stoppen oder Wiki read-only setzen.
 2. Finalen Produktionssnapshot erstellen.
@@ -246,4 +256,9 @@ curl -I http://appsmith.trigonet.local/
 
 Architektur: empfohlen.
 
-Zeitpunkt: erst nach Produktionsbackup, Restore-Test und Speicherbereinigung.
+Status: produktiv auf Port `80` aktiv. Rollback bleibt kurzfristig moeglich mit:
+
+```bash
+docker rm -f trigowiki_openresty
+docker start mediawiki_wiki
+```

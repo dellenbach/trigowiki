@@ -5,7 +5,7 @@ if ( !defined( 'MEDIAWIKI' ) ) {
 }
 
 $wgSitename = getenv( 'MEDIAWIKI_SITENAME' ) ?: 'Trigowiki Staging';
-$wgSitename = preg_replace( '/\s+LTS$/', '', $wgSitename );
+$wgSitename = preg_replace( '/\s+(?:LTS|Staging)$/', '', $wgSitename );
 $wgMetaNamespace = 'Trigowiki';
 
 $wgScriptPath = '';

@@ -4,11 +4,13 @@ Stand: 2026-05-22
 
 ## Kurzfazit
 
-Staging ist fuer Suche und MediaWiki 1.45.3 weitgehend validiert. Produktion ist noch nicht freigabereif fuer den Cutover, aber die wichtigsten Backup-/Restore-Blocker sind jetzt abgebaut.
+Der Cutover auf das neue MediaWiki 1.45.3 hinter OpenResty ist erfolgt. Die wichtigsten Backup-/Restore-Blocker wurden vorher abgebaut und die ersten Produktions-Smokes sind erfolgreich.
 
 ## Was aktuell gut aussieht
 
-- Staging laeuft mit `mediawiki:1.45.3` auf `http://brisen:8081`.
+- Das neue Wiki laeuft mit `mediawiki:1.45.3` weiterhin technisch im Container `mediawiki_wiki_staging` auf `http://brisen:8081` und wird produktiv ueber OpenResty auf Port `80` bedient.
+- OpenResty laeuft als `trigowiki_openresty` auf `0.0.0.0:80 -> 80/tcp`.
+- Der alte Produktionscontainer `mediawiki_wiki` ist gestoppt und bleibt als Rollback-Punkt vorhanden.
 - Suche laeuft in Staging mit CirrusSearch/Elastica `REL1_45` und OpenSearch `1.3.20`.
 - OpenSearch-Health war gruen: ein Node, alle Shards aktiv, keine unassigned Shards.
 - CirrusSearch `CheckIndexes` meldete die geprueften Indizes/Shards als `ok`.
@@ -18,24 +20,25 @@ Staging ist fuer Suche und MediaWiki 1.45.3 weitgehend validiert. Produktion ist
 - Der Host wurde bereinigt; `/` hatte nach den letzten Pruefungen ca. 18 GB frei.
 - Produktionssnapshot `20260522T141847Z` wurde erstellt und archivseitig validiert.
 - Restore-Test des SQL-Dumps in einem isolierten MySQL-5.7-Container war erfolgreich.
+- Produktions-Smokes nach dem Cutover waren erfolgreich: Startseite, Suche `postgres`, Suche `gres` mit `go=Seite`, `Postgres_Cluster`, Bildauslieferung, Appsmith unter `/app` und `appsmith.trigonet.local`.
 
-## Blocker vor Produktion
+## Offene Nacharbeiten
 
-1. Produktions-Migrationsrunbook fehlt noch als finale Schritt-fuer-Schritt-Prozedur.
-   - Staging ist validiert, aber Produktion braucht ein Wartungsfenster-Runbook mit Stop, Snapshot, Upgrade, Reindex, Smoke-Test und Rollback-Punkt.
-
-2. Host-Ressourcen muessen vor dem Cutover stabil bleiben.
+1. Host-Ressourcen muessen weiter stabil bleiben.
    - OpenSearch-Reindex und MediaWiki-Dumps brauchen temporaer deutlich mehr Speicherplatz.
    - Disk-Watermark-Probleme wurden in Staging bereits gesehen und fuer OpenSearch entschaerft.
-   - Der Host-Fuellstand ist aktuell deutlich besser, sollte aber vor dem Wartungsfenster erneut geprueft werden.
+   - Der Host-Fuellstand lag nach dem Cutover bei ca. 18 GB frei.
 
-3. Produktionsbackup muss noch in den Regelbetrieb.
+2. Produktionsbackup muss noch in den Regelbetrieb.
    - `script/snapshot-production.sh` ist vorhanden und erfolgreich getestet.
    - Offen bleibt ein regelmaessiger Job inklusive Retention und externer Kopie.
 
-4. OpenResty-Cutover ist vorbereitet, aber nicht produktiv umgestellt.
-   - Testproxy auf `8088` funktioniert.
-   - Port `80` bleibt beim alten Produktions-Wiki bis zum Wartungsfenster.
+3. Direkte Backend-Ports sollten spaeter reduziert werden.
+   - `8081` fuer das Wiki-Backend und `8080` fuer Appsmith sind noch direkt erreichbar.
+   - Ziel bleibt, Backends nur ueber OpenResty oder lokal/interne Docker-Netze erreichbar zu machen.
+
+4. Alte Produktionsdienste erst nach Beobachtungszeit entfernen.
+   - `mediawiki_wiki`, `mediawiki_mysql` und `11f951d24998_elasticsearch` bleiben vorerst fuer Rollback bestehen.
 
 ## Produktionsbackup
 
@@ -72,11 +75,17 @@ GIT_COMMIT=<commit> ./script/snapshot-production.sh
 
 Danach muss ein Restore-Test gegen Staging oder eine isolierte Testinstanz erfolgen.
 
-## Empfehlung
+## Aktueller Produktionsstand
 
-Noch nicht auf Produktion umstellen. Naechste Reihenfolge:
+Port `80` ist auf OpenResty umgestellt. Rollback-Befehl:
+
+```bash
+docker rm -f trigowiki_openresty
+docker start mediawiki_wiki
+```
+
+Naechste Reihenfolge:
 
 1. Regelmaessigen Produktionsbackup-Job mit Retention und externer Kopie einrichten.
-2. Produktions-Cutover-Runbook schreiben und in Staging trocken testen.
-3. Direkt vor dem Wartungsfenster erneut Speicher, Snapshot und Restore-Pfad pruefen.
-4. Erst danach Wartungsfenster fuer Produktion planen.
+2. Produktion einige Tage beobachten: OpenResty-Logs, MediaWiki-Logs, Suche, Uploads, Appsmith.
+3. Danach direkte Backend-Ports reduzieren und alte Container/Images geordnet entfernen.
