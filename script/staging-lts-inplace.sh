@@ -214,6 +214,8 @@ docker run -d \
     -v "${STAGING_ROOT}/Ressourcen:${STAGING_MEDIAWIKI_PATH}/resources/trigowiki:ro" \
     "${STAGING_WIKI_IMAGE}" >/dev/null
 
+docker exec "${STAGING_WIKI_CONTAINER}" chown -R www-data:www-data "${STAGING_MEDIAWIKI_PATH}/images"
+
 sleep 15
 
 if [ "${RUN_STAGING_UPDATE}" = "1" ]; then
