@@ -58,7 +58,36 @@ wfLoadSkin( 'MonoBook' );
 
 $wgLogo = "$wgResourceBasePath/resources/trigowiki/trigonet_Logo_pos_ohneClaim_RGB.svg";
 $wgHooks['BeforePageDisplay'][] = static function ( OutputPage $out, Skin $skin ) use ( $wgLogo ) {
-    $out->addInlineStyle( ".mw-wiki-logo { background-image: url('{$wgLogo}') !important; background-size: 135px auto; }" );
+    $out->addInlineStyle( <<<CSS
+.mw-wiki-logo { background-image: url('{$wgLogo}') !important; background-size: 135px auto; }
+html,
+body,
+input,
+textarea,
+select,
+button,
+.mw-body,
+.mw-parser-output,
+.vector-body,
+.mw-page-title-main,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.mw-editsection,
+#mw-panel,
+.mw-portlet,
+#p-personal,
+#p-views,
+#p-cactions,
+#footer,
+.oo-ui-widget {
+    font-family: Arial, Helvetica, sans-serif;
+}
+CSS
+    );
     return true;
 };
 
