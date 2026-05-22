@@ -34,10 +34,10 @@ Der Cutover auf das neue MediaWiki 1.45.3 hinter OpenResty ist erfolgt. Die wich
    - Disk-Watermark-Probleme wurden bereits gesehen und fuer OpenSearch entschaerft.
    - Der Host-Fuellstand lag nach dem Cutover bei ca. 18 GB frei.
 
-2. Produktionsbackup muss noch in den Regelbetrieb.
-   - `script/snapshot-production.sh` ist vorhanden und erfolgreich getestet.
-   - `script/backup-production-daily.sh` erstellt ein taegliches schlankes Backup aus Datenbank, Uploads und Konfiguration mit 2-Tage-Retention.
-   - Offen bleibt eine externe Kopie ausserhalb des Hosts.
+2. Produktionsbackup laeuft im Regelbetrieb.
+   - `script/backup-production-daily.sh` laeuft taeglich als Cron-Job unter `trigowikisvc` auf `brisen`.
+   - `backup_trigowiki_new_wiki.bat` laeuft als geplanter Task auf `trigonet-ps-01` unter `sa-pstrigonet` und kopiert den neuesten Snapshot nach `\\trigonet.local\DFS\SQL-Backup_trigonet.local\BRISEN\Trigowiki_Backup\trigowiki-backup`.
+   - Externe Kopie ist damit sichergestellt.
 
 3. Direkte Backend-Ports sollten spaeter reduziert werden.
    - `8081` fuer das Wiki-Backend und `8080` fuer Appsmith sind noch direkt erreichbar.
@@ -97,6 +97,6 @@ docker start mediawiki_wiki
 
 Naechste Reihenfolge:
 
-1. Regelmaessigen Produktionsbackup-Job mit Retention und externer Kopie einrichten.
+1. Backup laeuft: Cron auf `brisen` plus Windows-Fetch auf DFS-Share.
 2. Produktion einige Tage beobachten: OpenResty-Logs, MediaWiki-Logs, Suche, Uploads, Appsmith.
 3. Danach direkte Backend-Ports reduzieren und alte Container/Images geordnet entfernen.

@@ -92,7 +92,7 @@ Das neue produktive Wiki kann von Windows aus mit einem einfachen Batch-Skript g
 backup_trigowiki_new_wiki.bat
 ```
 
-Das Skript sichert `trigowikisvc@brisen:/srv/mediawiki-production`, erzeugt einen Datenbankdump aus `mediawiki_mysql_production` und kopiert `images`, `config-lts` und `Ressourcen` nach `\\trigonet.local\DFS\SQL-Backup_trigonet.local\BRISEN\Trigowiki_Backup\new-wiki`.
+Das Skript holt den neuesten Snapshot, den `script/backup-production-daily.sh` auf `brisen` erstellt hat, und kopiert ihn nach `\\trigonet.local\DFS\SQL-Backup_trigonet.local\BRISEN\Trigowiki_Backup\trigowiki-backup\<snapshot-id>`. Voraussetzung: SSH-Key des ausfuehrenden Accounts ist fuer `trigowikisvc@brisen` hinterlegt.
 
 Fuer einen vollstaendigeren Snapshot mit Docker-Inventar, Manifest und Transfer-Archiv gibt es zusaetzlich die PowerShell-Variante:
 
