@@ -83,3 +83,26 @@ Set-ExecutionPolicy -Scope Process Bypass -Force
 ```
 
 Vor produktiver Nutzung muessen Zielpfad, Benutzer und Compose-/Docker-Aufruf gegen die aktuelle Produktion geprueft werden.
+
+## Backup von Windows
+
+Das neue Wiki bzw. die LTS-Staging-Umgebung kann von Windows aus mit einem einfachen Batch-Skript gesichert werden:
+
+```bat
+backup_trigowiki_new_wiki.bat
+```
+
+Das Skript sichert `trigowikisvc@brisen:/srv/mediawiki-staging`, erzeugt einen Datenbankdump aus `mediawiki_mysql_staging` und kopiert `images`, `config-lts` und `Ressourcen` nach `\\trigonet.local\DFS\SQL-Backup_trigonet.local\BRISEN\Trigowiki_Backup\new-wiki`.
+
+Fuer einen vollstaendigeren Snapshot mit Docker-Inventar, Manifest und Transfer-Archiv gibt es zusaetzlich die PowerShell-Variante:
+
+```powershell
+Set-ExecutionPolicy -Scope Process Bypass -Force
+.\backup-trigowiki-windows.ps1
+```
+
+Fuer die alte produktive Umgebung koennen Pfade und Container explizit ueberschrieben werden:
+
+```powershell
+.\backup-trigowiki-windows.ps1 -UserName del -RemoteRoot /srv/mediawiki -DbContainer mediawiki_mysql -WikiContainer mediawiki_wiki -SearchContainer 11f951d24998_elasticsearch -LocalBackupRoot \\trigonet.local\DFS\SQL-Backup_trigonet.local\BRISEN\Trigowiki_Backup\production
+```
