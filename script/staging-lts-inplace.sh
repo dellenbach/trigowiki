@@ -99,6 +99,7 @@ mkdir -p \
 
 cp "${REPO_ROOT}/config/mediawiki-lts/LocalSettings.php" "${STAGING_ROOT}/config-lts/LocalSettings.php"
 cp "${REPO_ROOT}/config/mediawiki/InfixTitleSearch.php" "${STAGING_ROOT}/config-lts/InfixTitleSearch.php"
+cp "${REPO_ROOT}/config/mediawiki/RecentBreadcrumbs.php" "${STAGING_ROOT}/config-lts/RecentBreadcrumbs.php"
 cp "${REPO_ROOT}/config/mediawiki-lts/SearchSettings.php" "${STAGING_ROOT}/config-lts/SearchSettings.php"
 rsync -a --delete "${REPO_ROOT}/Ressourcen/" "${STAGING_ROOT}/Ressourcen/"
 chmod -R a+rX "${STAGING_ROOT}/Ressourcen"
@@ -207,6 +208,7 @@ docker run -d \
     -e MEDIAWIKI_DEFAULT_SKIN=vector \
     -v "${STAGING_ROOT}/config-lts/LocalSettings.php:${STAGING_MEDIAWIKI_PATH}/LocalSettings.php:ro" \
     -v "${STAGING_ROOT}/config-lts/InfixTitleSearch.php:${STAGING_MEDIAWIKI_PATH}/InfixTitleSearch.php:ro" \
+    -v "${STAGING_ROOT}/config-lts/RecentBreadcrumbs.php:${STAGING_MEDIAWIKI_PATH}/RecentBreadcrumbs.php:ro" \
     -v "${STAGING_ROOT}/config-lts/SearchSettings.php:${STAGING_MEDIAWIKI_PATH}/SearchSettings.php:ro" \
     -v "${STAGING_ROOT}/extensions-lts/Elastica:${STAGING_MEDIAWIKI_PATH}/extensions/Elastica:ro" \
     -v "${STAGING_ROOT}/extensions-lts/CirrusSearch:${STAGING_MEDIAWIKI_PATH}/extensions/CirrusSearch:ro" \

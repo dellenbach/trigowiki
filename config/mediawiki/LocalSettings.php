@@ -271,6 +271,7 @@ foreach ( [
     'EmbeddingSettings.php',
     'CirrusSearchTuning.php',
     'InfixTitleSearch.php',
+    'RecentBreadcrumbs.php',
 ] as $trigowikiSettingsFile ) {
     $trigowikiSettingsPath = "$IP/$trigowikiSettingsFile";
     if ( file_exists( $trigowikiSettingsPath ) ) {

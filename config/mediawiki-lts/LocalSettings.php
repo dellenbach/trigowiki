@@ -144,6 +144,11 @@ if ( file_exists( $trigowikiInfixSearch ) ) {
     require_once $trigowikiInfixSearch;
 }
 
+$trigowikiRecentBreadcrumbs = "$IP/RecentBreadcrumbs.php";
+if ( file_exists( $trigowikiRecentBreadcrumbs ) ) {
+    require_once $trigowikiRecentBreadcrumbs;
+}
+
 $trigowikiSearchSettings = "$IP/SearchSettings.php";
 if ( file_exists( $trigowikiSearchSettings ) ) {
     require_once $trigowikiSearchSettings;
