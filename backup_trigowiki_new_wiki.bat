@@ -48,6 +48,10 @@ if errorlevel 8 goto :error
 REM Temp aufraumen
 rmdir /s /q "%TEMP_TARGET%"
 
+REM Alte Snapshots auf DFS-Share loeschen (Retention: 3 Tage)
+echo Alte Snapshots bereinigen...
+powershell -Command "Get-ChildItem '%BACKUP_DIR%' -Directory | Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-3) } | ForEach-Object { Write-Host ('Entferne: ' + $_.Name); Remove-Item $_.FullName -Recurse -Force }"
+
 echo Backup abgeschlossen: %TARGET%
 exit /b 0
 
