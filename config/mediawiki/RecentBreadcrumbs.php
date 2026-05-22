@@ -6,9 +6,13 @@ if ( !defined( 'MEDIAWIKI' ) ) {
 
 const TRIGOWIKI_RECENT_BREADCRUMBS_LIMIT = 5;
 
+if ( !class_exists( 'Html' ) && class_exists( '\MediaWiki\Html\Html' ) ) {
+    class_alias( '\MediaWiki\Html\Html', 'Html' );
+}
+
 $wgHooks['BeforePageDisplay'][] = static function ( OutputPage $out, Skin $skin ) {
     $title = $out->getTitle();
-    if ( !$title instanceof Title ) {
+    if ( !is_object( $title ) || !method_exists( $title, 'getPrefixedDBkey' ) ) {
         return true;
     }
     if ( $title->isSpecial( 'Badtitle' ) ) {
@@ -86,7 +90,7 @@ CSS
 
     var label = document.createElement( 'span' );
     label.className = 'trigowiki-recent-breadcrumbs-label';
-    label.textContent = 'Navigationsweg:';
+    label.textContent = 'Zuletzt besucht:';
     node.appendChild( label );
     node.appendChild( document.createTextNode( ' ' ) );
 

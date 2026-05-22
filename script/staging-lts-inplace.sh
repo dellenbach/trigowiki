@@ -226,7 +226,7 @@ docker run -d \
     --security-opt seccomp=unconfined \
     -p "${STAGING_HTTP_PORT}:${STAGING_CONTAINER_HTTP_PORT}" \
     -e MEDIAWIKI_SERVER="${STAGING_MEDIAWIKI_SERVER}" \
-    -e MEDIAWIKI_SITENAME="Trigowiki Staging LTS" \
+    -e MEDIAWIKI_SITENAME="Trigowiki Staging" \
     -e MEDIAWIKI_LANGUAGE_CODE=de \
     -e MEDIAWIKI_SECRET_KEY="${STAGING_MEDIAWIKI_SECRET_KEY}" \
     -e MEDIAWIKI_DB_TYPE=mysql \
