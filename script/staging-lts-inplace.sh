@@ -14,7 +14,7 @@ STAGING_ES_CONTAINER=${STAGING_ES_CONTAINER:-elasticsearch_staging}
 STAGING_SEARCH_CONTAINER=${STAGING_SEARCH_CONTAINER:-elasticsearch_staging_lts}
 STAGING_NETWORK=${STAGING_NETWORK:-trigowiki_staging}
 STAGING_WIKI_IMAGE=${STAGING_WIKI_IMAGE:-mediawiki:1.43}
-STAGING_SEARCH_IMAGE=${STAGING_SEARCH_IMAGE:-elasticsearch:7.10.2}
+STAGING_SEARCH_IMAGE=${STAGING_SEARCH_IMAGE:-docker.elastic.co/elasticsearch/elasticsearch:7.10.2}
 STAGING_CONTAINER_HTTP_PORT=${STAGING_CONTAINER_HTTP_PORT:-80}
 STAGING_MEDIAWIKI_PATH=${STAGING_MEDIAWIKI_PATH:-/var/www/html}
 
@@ -103,7 +103,12 @@ cp "${REPO_ROOT}/config/mediawiki/RecentBreadcrumbs.php" "${STAGING_ROOT}/config
 cp "${REPO_ROOT}/config/mediawiki-lts/SearchSettings.php" "${STAGING_ROOT}/config-lts/SearchSettings.php"
 rsync -a --delete "${REPO_ROOT}/Ressourcen/" "${STAGING_ROOT}/Ressourcen/"
 chmod -R a+rX "${STAGING_ROOT}/Ressourcen"
-rsync -a --delete "${PROD_ROOT}/images/" "${STAGING_ROOT}/images/"
+if docker ps --format '{{.Names}}' | grep -qx "${STAGING_WIKI_CONTAINER}"; then
+    docker exec "${STAGING_WIKI_CONTAINER}" sh -c "image_dir='${STAGING_MEDIAWIKI_PATH}/images'; if [ -d /images ]; then image_dir=/images; fi; find \"\$image_dir\" -mindepth 1 -maxdepth 1 -exec rm -rf {} +; chown '$(id -u):$(id -g)' \"\$image_dir\""
+else
+    docker run --rm -v "${STAGING_ROOT}/images:/images" --entrypoint sh "${STAGING_WIKI_IMAGE}" -c 'find /images -mindepth 1 -maxdepth 1 -exec rm -rf {} +; chmod 0777 /images'
+fi
+rsync -a --no-owner --no-group --delete "${PROD_ROOT}/images/" "${STAGING_ROOT}/images/"
 
 if [ "${ENABLE_MODERN_SEARCH}" = "1" ]; then
     echo "Preparing CirrusSearch extensions for MediaWiki LTS"
@@ -225,7 +230,7 @@ if [ "${RUN_STAGING_UPDATE}" = "1" ]; then
     if docker exec "${STAGING_WIKI_CONTAINER}" test -f "${STAGING_MEDIAWIKI_PATH}/maintenance/run.php"; then
         docker exec "${STAGING_WIKI_CONTAINER}" php "${STAGING_MEDIAWIKI_PATH}/maintenance/run.php" update --quick
     else
-        docker exec "${STAGING_WIKI_CONTAINER}" php "${STAGING_MEDIAWIKI_PATH}/maintenance/update.php" --quick --skip-config-validation
+        docker exec "${STAGING_WIKI_CONTAINER}" php "${STAGING_MEDIAWIKI_PATH}/maintenance/update.php" --quick
     fi
 fi
 
