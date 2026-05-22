@@ -35,8 +35,8 @@ Staging ist fuer Suche und MediaWiki 1.45.3 weitgehend validiert. Produktion ist
    - Staging ist validiert, aber Produktion braucht ein Wartungsfenster-Runbook mit Stop, Snapshot, Upgrade, Reindex, Smoke-Test und Rollback-Punkt.
 
 5. Host-Ressourcen muessen vor dem Cutover stabilisiert werden.
-   - OpenSearch-Reindex und MediaWiki-Dumps brauchen temporair deutlich mehr Speicherplatz.
-   - Disk-Watermark-Probleme wurden in Staging bereits gesehen und fuer OpenSearch entschärft; der Host-Fuellstand bleibt trotzdem ein Betriebsrisiko.
+   - OpenSearch-Reindex und MediaWiki-Dumps brauchen temporaer deutlich mehr Speicherplatz.
+   - Disk-Watermark-Probleme wurden in Staging bereits gesehen und fuer OpenSearch entschaerft; der Host-Fuellstand bleibt trotzdem ein Betriebsrisiko.
 
 ## Produktionsbackup
 
