@@ -6,7 +6,7 @@ Stand: 2026-05-22
 
 Die Zielarchitektur ist sinnvoll: Appsmith, Trigowiki und Reverse Proxy werden getrennt betrieben. Das reduziert Kopplung, macht den Wiki-Container einfacher und erlaubt spaeter saubere Updates von Proxy, Wiki und Appsmith unabhaengig voneinander.
 
-Der Cutover sollte aber erst nach Produktionssnapshot, Restore-Test und ausreichend freiem Speicher erfolgen. Der Proxy-Umbau ist kein Ersatz fuer das noch fehlende Produktionsbackup.
+Der Cutover sollte trotz vorbereiteter Testinstanz erst im Wartungsfenster erfolgen. Produktionssnapshot, Restore-Test und ausreichend freier Speicher sind jetzt nachgewiesen; offen bleibt ein finales Cutover-Runbook und der Regelbetrieb fuer Backups.
 
 ## Ist-Zustand
 
@@ -15,7 +15,8 @@ Der Cutover sollte aber erst nach Produktionssnapshot, Restore-Test und ausreich
 - `appsmith` publiziert `0.0.0.0:8080 -> 80/tcp` und `0.0.0.0:8443 -> 443/tcp`.
 - `mediawiki_wiki_staging` publiziert `0.0.0.0:8081 -> 80/tcp`.
 - `mediawiki_wiki` und `appsmith` liegen aktuell in verschiedenen Docker-Netzwerken.
-- `/srv/openresty` existiert noch nicht.
+- `/srv/openresty` existiert auf `brisen` und enthaelt die generierte Testkonfiguration.
+- `trigowiki_openresty_test` laeuft testweise auf `0.0.0.0:8088 -> 80/tcp`.
 
 ## Zielbild
 
@@ -51,6 +52,8 @@ sudo install -d -o openrestysvc -g openrestysvc /srv/openresty/config /srv/openr
 
 Hinweis: Port `80` wird bei Docker-Publishing durch den Docker-Daemon gebunden. Der Host-User `openrestysvc` kann den Container verwalten, wenn er in der Docker-Gruppe ist. Innerhalb des Containers sollte OpenResty Worker-Prozesse unprivilegiert laufen lassen; der Container selbst braucht fuer `80:80` nicht zwingend als Host-root gestartet zu werden, weil Docker das Port-Binding uebernimmt.
 
+Aktueller Zwischenstand: `/srv/openresty` ist fuer den Testlauf angelegt, gehoert aber noch `del`. `openrestysvc` wurde noch nicht angelegt. Vor dem produktiven Cutover sollte der Besitzer auf `openrestysvc` umgestellt werden.
+
 ## OpenResty-Konfiguration
 
 Zielpfade auf dem Host:
@@ -61,6 +64,15 @@ Zielpfade auf dem Host:
 /srv/openresty/logs/
 /srv/openresty/cache/
 ```
+
+Das Repo enthaelt dafuer:
+
+```text
+config/openresty/nginx.conf.template
+script/prepare-openresty.sh
+```
+
+Der Testlauf generiert daraus `/srv/openresty/config/nginx.conf`. Auf dem aktuellen Docker-Host muss die Docker-Bridge-IP explizit als `HOST_GATEWAY` gesetzt werden, da `host-gateway` nicht unterstuetzt wird.
 
 Routing-Regeln:
 
@@ -106,14 +118,13 @@ docker network connect trigowiki_proxy appsmith
 5. OpenResty testweise auf `8088` starten:
 
 ```bash
-docker run -d \
-  --name trigowiki_openresty_test \
-  --network trigowiki_proxy \
-  -p 8088:80 \
-  -v /srv/openresty/config/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf:ro \
-  -v /srv/openresty/logs:/usr/local/openresty/nginx/logs \
-  -v /srv/openresty/cache:/var/cache/nginx \
-  openresty/openresty:alpine
+HOST_GATEWAY=$(ip -4 addr show docker0 | awk '/inet / { sub(/\/.*/, "", $2); print $2; exit }')
+OPENRESTY_ROOT=/srv/openresty \
+OPENRESTY_TEST_PORT=8088 \
+HOST_GATEWAY=$HOST_GATEWAY \
+WIKI_BACKEND=host.docker.internal:80 \
+APPSMITH_BACKEND=host.docker.internal:8080 \
+./script/prepare-openresty.sh
 ```
 
 6. Syntax pruefen:
@@ -128,6 +139,14 @@ docker exec trigowiki_openresty_test openresty -t
 curl -H 'Host: trigowiki.trigonet.local' http://localhost:8088/
 curl -H 'Host: appsmith.trigonet.local' http://localhost:8088/
 ```
+
+Aktueller Teststand:
+
+- OpenResty-Konfiguration: Syntax `ok`.
+- `Host: trigowiki.trigonet.local` `/`: HTTP `301`.
+- `Host: trigowiki.trigonet.local` Suche `postgres`: HTTP `200`.
+- `Host: trigowiki.trigonet.local` `/app`: HTTP `200`.
+- `Host: appsmith.trigonet.local` `/`: HTTP `200`.
 
 ### Phase 2: Neues Wiki produktionsnah validieren
 
