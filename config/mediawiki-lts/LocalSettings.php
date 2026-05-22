@@ -102,6 +102,28 @@ h6,
 .ve-ce-headingNode * {
     font-family: Arial, Helvetica, sans-serif !important;
 }
+.mw-body h1,
+.mw-body h2,
+.mw-body h3,
+.mw-body h4,
+.mw-body h5,
+.mw-body h6,
+.mw-parser-output h1,
+.mw-parser-output h2,
+.mw-parser-output h3,
+.mw-parser-output h4,
+.mw-parser-output h5,
+.mw-parser-output h6,
+.mw-page-title-main,
+.mw-first-heading,
+.firstHeading,
+.mw-heading .mw-headline {
+    color: #990000;
+    border-bottom: 0 !important;
+}
+.mw-heading {
+    border-bottom: 0 !important;
+}
 CSS
     );
     return true;
