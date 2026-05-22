@@ -36,7 +36,8 @@ Der Cutover auf das neue MediaWiki 1.45.3 hinter OpenResty ist erfolgt. Die wich
 
 2. Produktionsbackup muss noch in den Regelbetrieb.
    - `script/snapshot-production.sh` ist vorhanden und erfolgreich getestet.
-   - Offen bleibt ein regelmaessiger Job inklusive Retention und externer Kopie.
+   - `script/backup-production-daily.sh` erstellt ein taegliches schlankes Backup aus Datenbank, Uploads und Konfiguration mit 2-Tage-Retention.
+   - Offen bleibt eine externe Kopie ausserhalb des Hosts.
 
 3. Direkte Backend-Ports sollten spaeter reduziert werden.
    - `8081` fuer das Wiki-Backend und `8080` fuer Appsmith sind noch direkt erreichbar.
@@ -49,7 +50,10 @@ Der Cutover auf das neue MediaWiki 1.45.3 hinter OpenResty ist erfolgt. Die wich
 
 ## Produktionsbackup
 
-Das Repo enthaelt `script/snapshot-production.sh` als reproduzierbaren Produktionssnapshot-Baustein. Das Skript schreibt standardmaessig nach `/srv/mediawiki/backup/snapshots/<timestamp>` und bricht ab, wenn unter `/srv/mediawiki` weniger als 5 GB frei sind.
+Das Repo enthaelt zwei Backup-Bausteine:
+
+- `script/backup-production-daily.sh`: taegliches Betriebsbackup mit Datenbankdump, Uploads, `config`, `config-lts` und `Ressourcen`; Standardziel `/srv/mediawiki-production/backup/daily/<timestamp>`, Retention 2 Tage.
+- `script/snapshot-production.sh`: groesserer manueller Produktionssnapshot-Baustein fuer besondere Wartungsfenster; Standardziel `/srv/mediawiki/backup/snapshots/<timestamp>`.
 
 Der erste erfolgreiche Produktionssnapshot liegt auf `brisen` unter:
 

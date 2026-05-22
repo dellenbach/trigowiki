@@ -101,6 +101,8 @@ Set-ExecutionPolicy -Scope Process Bypass -Force
 .\backup-trigowiki-windows.ps1
 ```
 
+Auf `brisen` ist fuer den Regelbetrieb `script/backup-production-daily.sh` vorgesehen. Es sichert Datenbank, Uploads und Konfiguration nach `/srv/mediawiki-production/backup/daily/<timestamp>` und entfernt Backups, die aelter als 2 Tage sind.
+
 Fuer die alte produktive Umgebung koennen Pfade und Container explizit ueberschrieben werden:
 
 ```powershell

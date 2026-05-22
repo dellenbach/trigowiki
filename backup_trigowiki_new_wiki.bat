@@ -2,38 +2,55 @@
 setlocal
 chcp 65001 >nul
 
-REM Einfaches Windows-Backup fuer das neue Trigowiki auf brisen.
-REM Sichert wie das alte Backup: Datenbankdump plus Uploads/Config.
-
 set "SSH_TARGET=trigowikisvc@brisen"
-set "REMOTE_ROOT=/srv/mediawiki-production"
-set "DB_CONTAINER=mediawiki_mysql_production"
-set "DB_NAME=wikidb"
-set "BACKUP_DIR=\\trigonet.local\DFS\SQL-Backup_trigonet.local\BRISEN\Trigowiki_Backup\new-wiki"
+set "REMOTE_BACKUP=/srv/mediawiki-production/backup/daily"
+set "BACKUP_DIR=\\trigonet.local\DFS\SQL-Backup_trigonet.local\BRISEN\Trigowiki_Backup\trigowiki-backup"
+set "TEMP_DIR=%TEMP%\trigowiki-backup"
 
-if not exist "%BACKUP_DIR%" mkdir "%BACKUP_DIR%"
+REM Neuesten Snapshot-Namen von brisen holen
+for /f %%i in ('ssh %SSH_TARGET% "ls -1 %REMOTE_BACKUP% | sort -r | head -1"') do set "SNAPSHOT=%%i"
 
-echo Mysql Backup
-ssh %SSH_TARGET% "docker exec %DB_CONTAINER% sh -c 'exec mysqldump -uroot -p^"$MYSQL_ROOT_PASSWORD^" %DB_NAME%'" > "%BACKUP_DIR%\trigowiki_new_wiki.sql"
+if "%SNAPSHOT%"=="" (
+    echo Kein Snapshot gefunden auf brisen.
+    exit /b 1
+)
+
+echo Aktueller Snapshot: %SNAPSHOT%
+set "TARGET=%BACKUP_DIR%\%SNAPSHOT%"
+
+if exist "%TARGET%" (
+    echo Snapshot %SNAPSHOT% bereits lokal vorhanden, wird uebersprungen.
+    exit /b 0
+)
+
+REM Zuerst in lokales Temp-Verzeichnis laden
+set "TEMP_TARGET=%TEMP_DIR%\%SNAPSHOT%"
+if exist "%TEMP_TARGET%" rmdir /s /q "%TEMP_TARGET%"
+mkdir "%TEMP_TARGET%"
+
+echo Kopiere Datenbankdump...
+scp %SSH_TARGET%:%REMOTE_BACKUP%/%SNAPSHOT%/wikidb-production.sql "%TEMP_TARGET%/"
 if errorlevel 1 goto :error
 
-echo Filebackup
-
-REM Uploads
-scp -r %SSH_TARGET%:%REMOTE_ROOT%/images "%BACKUP_DIR%\"
+echo Kopiere Uploads und Config...
+scp %SSH_TARGET%:%REMOTE_BACKUP%/%SNAPSHOT%/uploads-config.tgz "%TEMP_TARGET%/"
 if errorlevel 1 goto :error
 
-REM LTS-Config des neuen Wikis
-scp -r %SSH_TARGET%:%REMOTE_ROOT%/config-lts "%BACKUP_DIR%\"
+echo Kopiere Metadaten...
+scp %SSH_TARGET%:%REMOTE_BACKUP%/%SNAPSHOT%/metadata.env "%TEMP_TARGET%/"
 if errorlevel 1 goto :error
 
-REM Statische Ressourcen wie Logo-Dateien
-scp -r %SSH_TARGET%:%REMOTE_ROOT%/Ressourcen "%BACKUP_DIR%\"
-if errorlevel 1 goto :error
+REM Auf DFS-Share kopieren
+echo Kopiere auf DFS-Share...
+robocopy "%TEMP_TARGET%" "%TARGET%" /e /is /it
+if errorlevel 8 goto :error
 
-echo Backup abgeschlossen: %BACKUP_DIR%
+REM Temp aufraumen
+rmdir /s /q "%TEMP_TARGET%"
+
+echo Backup abgeschlossen: %TARGET%
 exit /b 0
 
 :error
-echo Backup fehlgeschlagen.
+echo Fehler beim Kopieren des Backups.
 exit /b 1
