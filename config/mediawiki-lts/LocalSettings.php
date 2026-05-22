@@ -78,6 +78,13 @@ wfLoadExtension( 'TemplateData' );
 wfLoadExtension( 'VisualEditor' );
 wfLoadExtension( 'WikiEditor' );
 
+$wgPasswordPolicy = [
+    'policies' => [
+        'default' => [],
+    ],
+    'checks' => $wgPasswordPolicy['checks'],
+];
+
 $wgScribuntoDefaultEngine = 'luastandalone';
 $wgDefaultUserOptions['usebetatoolbar'] = 1;
 

@@ -233,3 +233,10 @@ foreach ( [
         require_once $trigowikiSettingsPath;
     }
 }
+
+$wgPasswordPolicy = [
+    'policies' => [
+        'default' => [],
+    ],
+    'checks' => $wgPasswordPolicy['checks'],
+];
