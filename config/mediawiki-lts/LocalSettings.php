@@ -124,6 +124,84 @@ h6,
 .mw-heading {
     border-bottom: 0 !important;
 }
+
+.mw-page-title-main,
+.mw-first-heading,
+.firstHeading,
+.mw-body h1,
+.mw-parser-output h1 {
+    font-size: 2rem !important;
+    font-weight: 750 !important;
+    line-height: 1.24 !important;
+    margin-top: 1.1em !important;
+    margin-bottom: 0.5em !important;
+}
+
+.mw-body h2,
+.mw-parser-output h2 {
+    font-size: 1.55rem !important;
+    font-weight: 700 !important;
+    line-height: 1.28 !important;
+    margin-top: 1em !important;
+    margin-bottom: 0.45em !important;
+    border-bottom: 0 !important;
+}
+
+.mw-body h3,
+.mw-parser-output h3 {
+    font-size: 1.3rem !important;
+    font-weight: 650 !important;
+    line-height: 1.32 !important;
+    margin-top: 0.9em !important;
+    margin-bottom: 0.35em !important;
+}
+
+.mw-body h4,
+.mw-parser-output h4 {
+    font-size: 1.1rem !important;
+    font-weight: 600 !important;
+    line-height: 1.35 !important;
+    margin-top: 0.8em !important;
+    margin-bottom: 0.3em !important;
+}
+
+.mw-parser-output h1 .mw-headline,
+.mw-parser-output h2 .mw-headline,
+.mw-parser-output h3 .mw-headline,
+.mw-parser-output h4 .mw-headline,
+.mw-body h1 .mw-headline,
+.mw-body h2 .mw-headline,
+.mw-body h3 .mw-headline,
+.mw-body h4 .mw-headline {
+    font-size: inherit !important;
+    font-weight: inherit !important;
+    line-height: inherit !important;
+}
+
+@media (max-width: 768px) {
+    .mw-page-title-main,
+    .mw-first-heading,
+    .firstHeading,
+    .mw-body h1,
+    .mw-parser-output h1 {
+        font-size: 1.75rem !important;
+    }
+
+    .mw-body h2,
+    .mw-parser-output h2 {
+        font-size: 1.4rem !important;
+    }
+
+    .mw-body h3,
+    .mw-parser-output h3 {
+        font-size: 1.2rem !important;
+    }
+
+    .mw-body h4,
+    .mw-parser-output h4 {
+        font-size: 1.1rem !important;
+    }
+}
 CSS
     );
     return true;
@@ -131,7 +209,7 @@ CSS
 
 $wgGroupPermissions['*']['createaccount'] = false;
 $wgGroupPermissions['*']['edit'] = false;
-$wgGroupPermissions['*']['read'] = false;
+$wgGroupPermissions['*']['read'] = true;
 
 wfLoadExtension( 'Cite' );
 wfLoadExtension( 'ConfirmEdit' );

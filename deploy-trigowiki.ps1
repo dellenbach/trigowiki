@@ -2,6 +2,9 @@ param(
   [string]$HostName = "brisen",
   [string]$UserName = "appsmithsvc",
   [string]$RemoteAppDir = "/srv/mediawiki/current",
+  [string]$RemoteHostConfigDir = "/srv/mediawiki/config",
+  [string]$RemoteProductionConfigDir = "/srv/mediawiki-production/config",
+  [string]$RemoteProductionConfigLtsDir = "/srv/mediawiki-production/config-lts",
   [string]$RemoteTmpDir = "/tmp/trigowiki-deploy",
   [string]$RemoteCommand = "up -d --build",
   [switch]$SetupKey,
@@ -77,6 +80,8 @@ $skipRunValue = if ($SkipRun.IsPresent) { "True" } else { "False" }
 $remoteCommands = @(
   "mkdir -p $RemoteAppDir",
   "cp -a $RemoteTmpDir/. $RemoteAppDir/",
+  "if [ -d '$RemoteAppDir/config/mediawiki' ]; then mkdir -p '$RemoteHostConfigDir' '$RemoteProductionConfigDir'; cp -af '$RemoteAppDir/config/mediawiki/.' '$RemoteHostConfigDir/'; cp -af '$RemoteAppDir/config/mediawiki/.' '$RemoteProductionConfigDir/'; fi",
+  "if [ -d '$RemoteAppDir/config/mediawiki-lts' ]; then mkdir -p '$RemoteProductionConfigLtsDir'; cp -af '$RemoteAppDir/config/mediawiki-lts/.' '$RemoteProductionConfigLtsDir/'; fi",
   "find $RemoteAppDir -name '*.sh' -type f -exec chmod 750 {} +",
   "rm -rf $RemoteTmpDir",
   "if [ '$skipRunValue' = 'True' ]; then exit 0; fi",
