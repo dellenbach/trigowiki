@@ -63,6 +63,7 @@ wfLoadSkin( 'Vector' );
 wfLoadSkin( 'MonoBook' );
 
 $wgLogo = "$wgResourceBasePath/resources/trigowiki/trigonet_Logo_pos_ohneClaim_RGB.svg";
+$wgFavicon = "$wgResourceBasePath/resources/trigowiki/favicon.svg";
 $wgHooks['BeforePageDisplay'][] = static function ( OutputPage $out, Skin $skin ) use ( $wgLogo ) {
     $out->addInlineStyle( <<<CSS
 .mw-wiki-logo { background-image: url('{$wgLogo}') !important; background-size: 135px auto; }

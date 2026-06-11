@@ -1,21 +1,29 @@
+# Secrets (niemals commiten; Vorlage: .env.example)
 .env
 *.env
+.env.production
+*/.env.production
+
+# Logs
 *.log
+
+# OS-Artefakte
 __pycache__/
 *.pyc
 .DS_Store
 Thumbs.db
 
-# Lokale/runtime Daten nicht versehentlich neu aufnehmen.
+# Lokales VS-Code / IDE
+.vscode/
+.claude/
+.continue/
+
+# Verzeichnis "~" (versehentlich angelegtes Home-Dir-Artefakt)
+~/
+
+# Runtime-Daten (Backup/Restore-Prozess, nicht Git)
 volumes/
-mediawiki/images/
-mediawiki/backup/
-mediawiki/includes/
-mediawiki/extensions/
-mediawiki/skins/
-mediawiki/mediawiki_prod/
-mediawiki/production/
-mediawiki/ressources/
+mediawiki/
 backup/
 restore/
 staging/

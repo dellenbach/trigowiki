@@ -1,103 +1,90 @@
-# Do not forget to create a new database on your first run:
-# $ docker exec -it wiki /script/install.sh <username> <password>
-version: '3'
+# Trigowiki Produktions-Stack (MediaWiki 1.45.3, MySQL 5.7, OpenSearch 1.3)
+#
+# Ersteinrichtung neuer Server: script/setup-new-server.sh
+# Vorlage fuer Secrets: .env.example  →  .env (gitignored)
+# Container neu erstellen: script/start-wiki-production.sh
+# Backup (Cron): script/backup-production-daily.sh
+# OpenResty-Proxy: script/prepare-openresty.sh
+
 services:
 
-  mediawiki_mysql:
-    # build auskommentieren, fuer db init db restore
-    #build:
-    #  context: ./mysql_trigowiki
-    #  args:
-    #    buildno: 1
+  mediawiki_mysql_production:
     image: mysql:5.7
-    restart: always
-    container_name: mediawiki_mysql
+    restart: unless-stopped
+    container_name: mediawiki_mysql_production
     environment:
       MYSQL_DATABASE: wikidb
-      MYSQL_ROOT_PASSWORD: ${TRIGOWIKI_DB_ROOT_PASSWORD:?set TRIGOWIKI_DB_ROOT_PASSWORD in .env}
-      # MYSQL_RANDOM_ROOT_PASSWORD: 1
-    ports:
-      - 3306:3306
+      MYSQL_ROOT_PASSWORD: ${MEDIAWIKI_DB_PASSWORD:?set MEDIAWIKI_DB_PASSWORD in .env}
     networks:
-      - wikinet
+      - trigowiki_production
     volumes:
-      - mediawiki_mysql:/var/lib/mysql
-      - /srv/mediawiki/backup:/srv/mediawiki/backup
-      #- ./backup/trigowiki_dump.sql:/docker-entrypoint-initdb.d/trigowiki_dump.sql
-      #manuell: docker exec -i mediawiki_mysql mysql -hlocalhost -uroot -p"$TRIGOWIKI_DB_ROOT_PASSWORD" wikidb < ./backup/trigowiki_dump.sql
+      - mediawiki_mysql_production:/var/lib/mysql
+      - ${PROD_ROOT:-/srv/mediawiki-production}/backup:/backup
 
-  mediawiki_wiki:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: trigowiki
-    #image: mediawiki
-    restart: always
-    container_name: mediawiki_wiki
-
-    networks:
-      - wikinet
+  opensearch_production:
+    image: opensearchproject/opensearch:1.3.20
+    container_name: opensearch_production
+    restart: unless-stopped
     environment:
-      MEDIAWIKI_SERVER: http://trigowiki.trigonet.local
+      - discovery.type=single-node
+      - DISABLE_INSTALL_DEMO_CONFIG=true
+      - DISABLE_SECURITY_PLUGIN=true
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+      # Disk-Watermark deaktivieren (kleine Instanz)
+      - cluster.routing.allocation.disk.threshold_enabled=false
+    networks:
+      - trigowiki_production
+    volumes:
+      - opensearch_production_data:/usr/share/opensearch/data
+
+  mediawiki_wiki_production:
+    image: mediawiki:1.45.3
+    container_name: mediawiki_wiki_production
+    restart: unless-stopped
+    depends_on:
+      - mediawiki_mysql_production
+      - opensearch_production
+    networks:
+      - trigowiki_production
+    environment:
+      MEDIAWIKI_SERVER: ${MEDIAWIKI_SERVER:-http://trigowiki.trigonet.local}
       MEDIAWIKI_SITENAME: Trigowiki
       MEDIAWIKI_LANGUAGE_CODE: de
       MEDIAWIKI_SECRET_KEY: ${MEDIAWIKI_SECRET_KEY:?set MEDIAWIKI_SECRET_KEY in .env}
       MEDIAWIKI_DB_TYPE: mysql
-      MEDIAWIKI_DB_HOST: mediawiki_mysql
-      MEDIAWIKI_DB_PORT: 3306
+      MEDIAWIKI_DB_HOST: mediawiki_mysql_production
+      MEDIAWIKI_DB_PORT: "3306"
       MEDIAWIKI_DB_NAME: wikidb
       MEDIAWIKI_DB_USER: root
-      MEDIAWIKI_DB_TABLE_OPTIONS: ENGINE=InnoDB, DEFAULT CHARSET=binary
-      MEDIAWIKI_DB_PASSWORD: ${TRIGOWIKI_DB_ROOT_PASSWORD:?set TRIGOWIKI_DB_ROOT_PASSWORD in .env}
-      MEDIAWIKI_SEARCH_HOST: elasticsearch
-      MEDIAWIKI_ENABLE_UPLOADS: 1
-      MEDIAWIKI_EXTENSION_VISUAL_EDITOR_ENABLED: 1
+      MEDIAWIKI_DB_TABLE_OPTIONS: "ENGINE=InnoDB, DEFAULT CHARSET=binary"
+      MEDIAWIKI_DB_PASSWORD: ${MEDIAWIKI_DB_PASSWORD:?set MEDIAWIKI_DB_PASSWORD in .env}
+      MEDIAWIKI_SEARCH_HOST: opensearch_production
+      MEDIAWIKI_SEARCH_ENABLED: "1"
+      MEDIAWIKI_ENABLE_UPLOADS: "1"
       MEDIAWIKI_DEFAULT_SKIN: vector
     ports:
-    - 80:8080
-    #- 80:80
-    depends_on:
-    - mediawiki_mysql
-    - elasticsearch
-
+      - "8081:80"
     volumes:
-    - /srv/mediawiki/config/LocalSettings.php:/var/www/mediawiki/LocalSettings.php
-    - /srv/mediawiki/config/ExtraLocalSettings.php:/var/www/mediawiki/ExtraLocalSettings.php
-    - /srv/mediawiki/config/Permissions.php:/var/www/mediawiki/Permissions.php
-    - /srv/mediawiki/config/Extensions.php:/var/www/mediawiki/Extensions.php
-    - /srv/mediawiki/config/UploadSettings.php:/var/www/mediawiki/UploadSettings.php
-    - /srv/mediawiki/config/EmbeddingSettings.php:/var/www/mediawiki/EmbeddingSettings.php
-    - /srv/mediawiki/config/CirrusSearchTuning.php:/var/www/mediawiki/CirrusSearchTuning.php
-    - /srv/mediawiki/config/InfixTitleSearch.php:/var/www/mediawiki/InfixTitleSearch.php
-    - /srv/mediawiki/images:/var/www/mediawiki/images
-    - /srv/mediawiki/Ressourcen:/var/www/mediawiki/resources/trigowiki:ro
-    - /srv/mediawiki/extensions:/var/www/mediawiki/extensions
-    - /srv/mediawiki/skins/Vector:/var/www/mediawiki/skins/Vector
-    - /srv/mediawiki/includes:/var/www/mediawiki/includes
-    
-    #Die Pflege von Mediawiki auf dem host statt im container und mit bind mount eingebunden
-    #- /srv/mediawiki/mediawiki_1393:/var/www/mediawiki
-
-    #- ./../../../testdata/logo.png:/var/www/mediawiki/resources/assets/wiki.png:ro
-    #- /srv/mediawiki/config/ExtraLocalSettings.php:/var/www/mediawiki/ExtraLocalSettings.php
-    #Schema Update: docker
-
-  elasticsearch:
-    image: elasticsearch:5.4
-    container_name: elasticsearch
-    restart: always
-    networks:
-      - wikinet
-    volumes:
-      - esdata:/usr/share/elasticsearch/data
+      - ${PROD_ROOT:-/srv/mediawiki-production}/config-lts/LocalSettings.php:/var/www/html/LocalSettings.php
+      - ${PROD_ROOT:-/srv/mediawiki-production}/config-lts/SearchSettings.php:/var/www/html/SearchSettings.php
+      - ${PROD_ROOT:-/srv/mediawiki-production}/config-lts/RecentBreadcrumbs.php:/var/www/html/RecentBreadcrumbs.php
+      - ${PROD_ROOT:-/srv/mediawiki-production}/config-lts/InfixTitleSearch.php:/var/www/html/InfixTitleSearch.php
+      - ${PROD_ROOT:-/srv/mediawiki-production}/extensions-lts/Elastica:/var/www/html/extensions/Elastica
+      - ${PROD_ROOT:-/srv/mediawiki-production}/extensions-lts/CirrusSearch:/var/www/html/extensions/CirrusSearch
+      - ${PROD_ROOT:-/srv/mediawiki-production}/extensions-lts/AdvancedSearch:/var/www/html/extensions/AdvancedSearch
+      - ${PROD_ROOT:-/srv/mediawiki-production}/extensions-lts/TimedMediaHandler:/var/www/html/extensions/TimedMediaHandler
+      - ${PROD_ROOT:-/srv/mediawiki-production}/extensions-lts/Interwiki:/var/www/html/extensions/Interwiki
+      - ${PROD_ROOT:-/srv/mediawiki-production}/images:/var/www/html/images
+      - ${PROD_ROOT:-/srv/mediawiki-production}/Ressourcen:/var/www/html/resources/trigowiki:ro
 
 volumes:
-    mediawiki_mysql:
-    esdata:
+  mediawiki_mysql_production:
+  opensearch_production_data:
 
 networks:
-    wikinet:
-      ipam:
+  trigowiki_production:
+    name: trigowiki_production
+
         driver: default
         config:
           - subnet: 10.0.0.1/24

@@ -44,7 +44,10 @@ if ( file_exists( "$IP/extensions/AdvancedSearch/extension.json" ) ) {
 }
 
 $wgSearchType = 'CirrusSearch';
-$cirrusSearchHost = getenv( 'MEDIAWIKI_SEARCH_HOST' ) ?: 'opensearch-production';
+$cirrusSearchHost = getenv( 'MEDIAWIKI_SEARCH_HOST' ) ?: 'opensearch_production';
+if ( filter_var( $cirrusSearchHost, FILTER_VALIDATE_IP ) ) {
+    $cirrusSearchHost = 'opensearch_production';
+}
 $wgCirrusSearchDefaultCluster = 'default';
 $wgCirrusSearchClusters = [
     'default' => [ $cirrusSearchHost ],

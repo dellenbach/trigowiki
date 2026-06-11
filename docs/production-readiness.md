@@ -12,7 +12,7 @@ Der Cutover auf das neue MediaWiki 1.45.3 hinter OpenResty ist erfolgt. Die wich
 - Die aktiven Dateien liegen unter `/srv/mediawiki-production`.
 - Die aktive Produktions-Datenbank laeuft als `mediawiki_mysql_production`, der Suchcontainer als `opensearch_production`.
 - Die aktiven Docker-Volumes heissen `mediawiki_mysql_production` und `opensearch_production_data`; alte `*staging*`-Volumes wurden entfernt.
-- Der Wiki-Container verwendet fuer DB/OpenSearch aktuell die Container-IPs `172.20.0.2` und `172.20.0.3`, weil PHP/curl im Container auf diesem Docker-Host bei Docker-DNS-Namen mit `getaddrinfo() thread failed to start` scheitert.
+- Der Wiki-Container setzt `MEDIAWIKI_DB_HOST=mediawiki_mysql_production` und `MEDIAWIKI_SEARCH_HOST=opensearch_production` (stabile Docker-DNS-Namen, keine IPs). Erststart und Recreate erfolgen ueber `script/start-wiki-production.sh`.
 - OpenResty laeuft als `trigowiki_openresty` auf `0.0.0.0:80 -> 80/tcp`.
 - Der alte Produktionscontainer `mediawiki_wiki` ist gestoppt und bleibt als Rollback-Punkt vorhanden.
 - Suche laeuft in Produktion mit CirrusSearch/Elastica `REL1_45` und OpenSearch `1.3.20`.
@@ -46,7 +46,12 @@ Der Cutover auf das neue MediaWiki 1.45.3 hinter OpenResty ist erfolgt. Die wich
 4. Alte Produktionsdienste erst nach Beobachtungszeit entfernen.
    - `mediawiki_wiki`, `mediawiki_mysql` und `11f951d24998_elasticsearch` bleiben vorerst fuer Rollback bestehen.
    - Die neuen Container heissen `mediawiki_wiki_production`, `mediawiki_mysql_production` und `opensearch_production`.
-   - Bei einer Neuerstellung von DB/Search muessen die IPs des Wiki-Containers kontrolliert oder entsprechend neu gesetzt werden.
+   - Beim Recreate des Containers einfach `bash /srv/mediawiki-production/script/start-wiki-production.sh` ausfuehren. Das Skript setzt Service-Namen und bindet alle Volumes korrekt ein.
+
+5. Nach Host-/Container-Restarts immer kurze Produktionschecks ausfuehren.
+   - `curl -sG 'http://trigowiki.trigonet.local/api.php' --data-urlencode 'action=query' --data-urlencode 'list=search' --data-urlencode 'srsearch=Hauptseite' --data-urlencode 'format=json'`
+   - `docker exec mediawiki_wiki_production curl -sS --max-time 3 http://opensearch_production:9200/_cluster/health`
+   - Erwartung: Such-API liefert Treffer, OpenSearch-Health ist `green`.
 
 ## Produktionsbackup
 

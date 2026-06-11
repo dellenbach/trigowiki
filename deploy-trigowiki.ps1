@@ -1,15 +1,103 @@
 param(
   [string]$HostName = "brisen",
-  [string]$UserName = "appsmithsvc",
-  [string]$RemoteAppDir = "/srv/mediawiki/current",
-  [string]$RemoteHostConfigDir = "/srv/mediawiki/config",
-  [string]$RemoteProductionConfigDir = "/srv/mediawiki-production/config",
-  [string]$RemoteProductionConfigLtsDir = "/srv/mediawiki-production/config-lts",
+  [string]$UserName = "trigowikisvc",
+  [string]$RemoteRoot = "/srv/mediawiki-production",
   [string]$RemoteTmpDir = "/tmp/trigowiki-deploy",
-  [string]$RemoteCommand = "up -d --build",
   [switch]$SetupKey,
   [switch]$SkipRun
 )
+
+# Kopiert config/mediawiki-lts/, script/ und Ressourcen/ auf den Server
+# und startet den Wiki-Container bei Bedarf neu.
+#
+# Erstinstallation:  deploy-trigowiki.ps1 -SetupKey   (SSH-Key einrichten + deployen)
+# Normales Deploy:   deploy-trigowiki.ps1
+# Nur kopieren:      deploy-trigowiki.ps1 -SkipRun
+
+$ErrorActionPreference = "Stop"
+
+function Test-CommandAvailable {
+  param([string]$Name)
+  if (-not (Get-Command $Name -ErrorAction SilentlyContinue)) {
+    throw "Command '$Name' nicht gefunden. OpenSSH Client installieren."
+  }
+}
+
+function Set-SshKeyAuth {
+  $sshDir = Join-Path $env:USERPROFILE ".ssh"
+  $privateKey = Join-Path $sshDir "id_ed25519"
+  $publicKey = "$privateKey.pub"
+
+  if (-not (Test-Path $privateKey)) {
+    Write-Host "Erzeuge SSH Key (ed25519)..."
+    ssh-keygen -t ed25519 -C "$UserName@$HostName" -f $privateKey
+  }
+  Get-Content $publicKey | ssh "$UserName@$HostName" "umask 077; mkdir -p ~/.ssh; cat >> ~/.ssh/authorized_keys"
+  Write-Host "Teste SSH Login..."
+  ssh "$UserName@$HostName" "hostname"
+}
+
+function Copy-Remote {
+  param([string]$Local, [string]$Remote)
+  if (Test-Path $Local) {
+    $target = "${UserName}@${HostName}:$Remote"
+    Write-Host "  $Local -> $target"
+    scp -r $Local $target
+  }
+}
+
+Test-CommandAvailable -Name "ssh"
+Test-CommandAvailable -Name "scp"
+
+if ($SetupKey) { Set-SshKeyAuth }
+
+$repoRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+Set-Location $repoRoot
+
+ssh "$UserName@$HostName" "rm -rf $RemoteTmpDir; mkdir -p $RemoteTmpDir"
+
+Write-Host "Kopiere Dateien nach $HostName:$RemoteTmpDir ..."
+Copy-Remote -Local "docker-compose.yml"   -Remote "$RemoteTmpDir/"
+Copy-Remote -Local ".env.example"         -Remote "$RemoteTmpDir/"
+Copy-Remote -Local "config"               -Remote "$RemoteTmpDir/"
+Copy-Remote -Local "script"               -Remote "$RemoteTmpDir/"
+Copy-Remote -Local "Ressourcen"           -Remote "$RemoteTmpDir/"
+
+$skipFlag = if ($SkipRun.IsPresent) { "1" } else { "0" }
+
+$remoteCmd = @"
+set -euo pipefail
+PROD_ROOT="$RemoteRoot"
+TMP="$RemoteTmpDir"
+
+# Config und Scripts deployen
+mkdir -p "\${PROD_ROOT}/config-lts" "\${PROD_ROOT}/script" "\${PROD_ROOT}/Ressourcen"
+cp -af "\${TMP}/config/mediawiki-lts/." "\${PROD_ROOT}/config-lts/"
+cp -af "\${TMP}/script/."              "\${PROD_ROOT}/script/"
+cp -af "\${TMP}/Ressourcen/."          "\${PROD_ROOT}/Ressourcen/"
+chmod -R a+rX "\${PROD_ROOT}/Ressourcen"
+find "\${PROD_ROOT}/script" -name '*.sh' -exec chmod 750 {} +
+
+# docker-compose.yml und .env.example im Repo-Verzeichnis ablegen
+mkdir -p "\${PROD_ROOT}/repo"
+cp -f "\${TMP}/docker-compose.yml" "\${PROD_ROOT}/repo/"
+cp -f "\${TMP}/.env.example"       "\${PROD_ROOT}/repo/"
+
+rm -rf "\${TMP}"
+
+if [ "$skipFlag" = "1" ]; then
+  echo "SkipRun gesetzt; kein Container-Restart."
+  exit 0
+fi
+
+echo "Wiki-Container neu starten..."
+bash "\${PROD_ROOT}/script/start-wiki-production.sh"
+"@
+
+Write-Host "Ausfuehren auf $HostName ..."
+ssh -tt "$UserName@$HostName" "$remoteCmd"
+Write-Host "Fertig."
+
 
 $ErrorActionPreference = "Stop"
 

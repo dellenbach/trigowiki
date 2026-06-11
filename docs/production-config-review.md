@@ -17,6 +17,11 @@ Die produktive Konfiguration ist die aktuelle Wahrheit, aber sie ist nicht direk
    - `config/mediawiki/Extensions.php`
    - `config/mediawiki/UploadSettings.php`
    - `config/mediawiki/EmbeddingSettings.php`
+- LTS-Hardening fuer Restart/Recreate:
+   - `config/mediawiki-lts/LocalSettings.php` hat einen Guard fuer IP-basierte `MEDIAWIKI_DB_HOST`-Werte und faellt auf `mediawiki_mysql_production` zurueck (Safety-Net).
+   - `config/mediawiki-lts/SearchSettings.php` hat einen Guard fuer IP-basierte `MEDIAWIKI_SEARCH_HOST`-Werte und faellt auf `opensearch_production` zurueck (Safety-Net).
+   - Default in `SearchSettings.php` wurde auf `opensearch_production` (mit Unterstrich) korrigiert.
+   - `script/start-wiki-production.sh` setzt Service-Namen direkt im `docker run`-Aufruf; der Guard ist zweite Verteidigungslinie.
 - Die exportierten Rohdateien bleiben unter `tmp/production-config/` und sind durch `.gitignore` ausgeschlossen.
 
 ## Nicht blind uebernommen
@@ -45,3 +50,4 @@ Die produktive `LocalSettings.php` enthaelt weiterhin reale Werte im exportierte
 - Die produktive `LocalSettings.php` laedt einige Erweiterungen per altem `require_once` statt durchgehend per `wfLoadExtension`. Beim LTS-Upgrade muss jede Erweiterung einzeln geprueft werden.
 - Der produktive MediaWiki-Core wird derzeit ueber `/srv/mediawiki/includes` gemountet. Dieser Zustand sollte nicht als Zielarchitektur uebernommen werden.
 - Suchindizes werden beim Upgrade neu aufgebaut, nicht aus Elasticsearch 5.4 uebernommen.
+- Der Produktionscontainer wird ueber `script/start-wiki-production.sh` erzeugt. Secrets kommen aus `/srv/mediawiki-production/.env.production` (nicht versioniert; Vorlage: `script/.env.production.example`). Die Guards in den LTS-Settings bleiben als zweite Verteidigungslinie aktiv.
