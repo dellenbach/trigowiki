@@ -185,10 +185,17 @@ if (getenv('MEDIAWIKI_DB_TYPE') != '') {
 if (getenv('MEDIAWIKI_DB_HOST') != '' || getenv('MEDIAWIKI_DB_PORT') != '') {
     $hostname = ((getenv('MEDIAWIKI_DB_HOST') != '') ? getenv('MEDIAWIKI_DB_HOST') : '127.0.0.1');
     $port = ((getenv('MEDIAWIKI_DB_PORT') != '') ? getenv('MEDIAWIKI_DB_PORT') : '3306');
+    $fallbackHost = ((getenv('MEDIAWIKI_DB_HOST_FALLBACK') != '') ? getenv('MEDIAWIKI_DB_HOST_FALLBACK') : 'mediawiki_mysql');
+
+    // Protect against stale container IPs after reboot by forcing Docker DNS names.
+    if ( preg_match('/^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$/', $hostname) ) {
+        $hostname = $fallbackHost;
+    }
+
     $wgDBserver = $hostname.':'.$port;
 }
 
-unset($hostname, $port);
+unset($hostname, $port, $fallbackHost);
 
 if (getenv('MEDIAWIKI_DB_NAME') != '') {
     $wgDBname = getenv('MEDIAWIKI_DB_NAME');

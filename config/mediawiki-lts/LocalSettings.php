@@ -25,6 +25,11 @@ $wgPasswordSender = getenv( 'MEDIAWIKI_PASSWORD_SENDER' ) ?: $wgEmergencyContact
 $wgDBtype = getenv( 'MEDIAWIKI_DB_TYPE' ) ?: 'mysql';
 $dbHost = getenv( 'MEDIAWIKI_DB_HOST' ) ?: 'mediawiki_mysql_production';
 $dbPort = getenv( 'MEDIAWIKI_DB_PORT' ) ?: '3306';
+$dbHostFallback = getenv( 'MEDIAWIKI_DB_HOST_FALLBACK' ) ?: 'mediawiki_mysql_production';
+// Guard against stale container IPs after reboot; prefer stable Docker DNS name.
+if ( preg_match( '/^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$/', $dbHost ) ) {
+    $dbHost = $dbHostFallback;
+}
 $wgDBserver = $dbHost . ':' . $dbPort;
 $wgDBname = getenv( 'MEDIAWIKI_DB_NAME' ) ?: 'wikidb';
 $wgDBuser = getenv( 'MEDIAWIKI_DB_USER' ) ?: 'root';
