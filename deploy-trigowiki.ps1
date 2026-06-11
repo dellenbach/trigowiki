@@ -56,7 +56,7 @@ Set-Location $repoRoot
 
 ssh "$UserName@$HostName" "rm -rf $RemoteTmpDir; mkdir -p $RemoteTmpDir"
 
-Write-Host "Kopiere Dateien nach $HostName:$RemoteTmpDir ..."
+Write-Host "Kopiere Dateien nach ${HostName}:${RemoteTmpDir} ..."
 Copy-Remote -Local "docker-compose.yml"   -Remote "$RemoteTmpDir/"
 Copy-Remote -Local ".env.example"         -Remote "$RemoteTmpDir/"
 Copy-Remote -Local "config"               -Remote "$RemoteTmpDir/"
