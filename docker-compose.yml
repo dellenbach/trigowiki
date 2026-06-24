@@ -51,6 +51,8 @@ services:
       MEDIAWIKI_SITENAME: Trigowiki
       MEDIAWIKI_LANGUAGE_CODE: de
       MEDIAWIKI_SECRET_KEY: ${MEDIAWIKI_SECRET_KEY:?set MEDIAWIKI_SECRET_KEY in .env}
+      MEDIAWIKI_EMERGENCY_CONTACT: ${MEDIAWIKI_EMERGENCY_CONTACT:-}
+      MEDIAWIKI_PASSWORD_SENDER: ${MEDIAWIKI_PASSWORD_SENDER:-}
       MEDIAWIKI_DB_TYPE: mysql
       MEDIAWIKI_DB_HOST: mediawiki_mysql_production
       MEDIAWIKI_DB_PORT: "3306"
@@ -62,6 +64,12 @@ services:
       MEDIAWIKI_SEARCH_ENABLED: "1"
       MEDIAWIKI_ENABLE_UPLOADS: "1"
       MEDIAWIKI_DEFAULT_SKIN: vector
+      MEDIAWIKI_SMTP_HOST: ${MEDIAWIKI_SMTP_HOST:-}
+      MEDIAWIKI_SMTP_PORT: ${MEDIAWIKI_SMTP_PORT:-}
+      MEDIAWIKI_SMTP_AUTH: ${MEDIAWIKI_SMTP_AUTH:-}
+      MEDIAWIKI_SMTP_SECURE: ${MEDIAWIKI_SMTP_SECURE:-}
+      MEDIAWIKI_SMTP_USERNAME: ${MEDIAWIKI_SMTP_USERNAME:-}
+      MEDIAWIKI_SMTP_PASSWORD: ${MEDIAWIKI_SMTP_PASSWORD:-}
     ports:
       - "8081:80"
     volumes:
@@ -84,7 +92,3 @@ volumes:
 networks:
   trigowiki_production:
     name: trigowiki_production
-
-        driver: default
-        config:
-          - subnet: 10.0.0.1/24

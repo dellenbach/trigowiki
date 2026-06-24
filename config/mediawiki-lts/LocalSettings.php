@@ -22,6 +22,45 @@ $wgResourceBasePath = $wgScriptPath;
 $wgEmergencyContact = getenv( 'MEDIAWIKI_EMERGENCY_CONTACT' ) ?: 'wiki@example.invalid';
 $wgPasswordSender = getenv( 'MEDIAWIKI_PASSWORD_SENDER' ) ?: $wgEmergencyContact;
 
+$smtpHost = getenv( 'MEDIAWIKI_SMTP_HOST' );
+if ( $smtpHost !== false && $smtpHost !== '' ) {
+    $smtpPortRaw = getenv( 'MEDIAWIKI_SMTP_PORT' );
+    $smtpPort = ( $smtpPortRaw !== false && $smtpPortRaw !== '' ) ? intval( $smtpPortRaw ) : 587;
+    if ( $smtpPort <= 0 ) {
+        $smtpPort = 587;
+    }
+
+    $smtpAuthEnv = getenv( 'MEDIAWIKI_SMTP_AUTH' );
+    $smtpAuthRaw = strtolower( ( $smtpAuthEnv !== false && $smtpAuthEnv !== '' ) ? $smtpAuthEnv : '1' );
+    $smtpAuth = !in_array( $smtpAuthRaw, [ '0', 'false', 'no', 'off' ], true );
+
+    $smtpSecure = strtolower( getenv( 'MEDIAWIKI_SMTP_SECURE' ) ?: '' );
+    if ( in_array( $smtpSecure, [ 'ssl', 'tls' ], true ) && strpos( $smtpHost, '://' ) === false ) {
+        $smtpHost = $smtpSecure . '://' . $smtpHost;
+    }
+
+    $smtpIdHost = parse_url( $wgServer, PHP_URL_HOST );
+    if ( !$smtpIdHost ) {
+        $smtpIdHost = 'localhost';
+    }
+
+    $wgSMTP = [
+        'host' => $smtpHost,
+        'IDHost' => $smtpIdHost,
+        'port' => $smtpPort,
+        'auth' => $smtpAuth,
+    ];
+
+    $smtpUser = getenv( 'MEDIAWIKI_SMTP_USERNAME' );
+    $smtpPassword = getenv( 'MEDIAWIKI_SMTP_PASSWORD' );
+    if ( $smtpUser !== false && $smtpUser !== '' ) {
+        $wgSMTP['username'] = $smtpUser;
+    }
+    if ( $smtpPassword !== false && $smtpPassword !== '' ) {
+        $wgSMTP['password'] = $smtpPassword;
+    }
+}
+
 $wgDBtype = getenv( 'MEDIAWIKI_DB_TYPE' ) ?: 'mysql';
 $dbHost = getenv( 'MEDIAWIKI_DB_HOST' ) ?: 'mediawiki_mysql_production';
 $dbPort = getenv( 'MEDIAWIKI_DB_PORT' ) ?: '3306';

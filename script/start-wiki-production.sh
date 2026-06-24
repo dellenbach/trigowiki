@@ -26,6 +26,25 @@ fi
 : "${MEDIAWIKI_DB_PASSWORD:?MEDIAWIKI_DB_PASSWORD fehlt in $ENV_FILE}"
 : "${MEDIAWIKI_SECRET_KEY:?MEDIAWIKI_SECRET_KEY fehlt in $ENV_FILE}"
 
+OPTIONAL_ENV_VARS=(
+    MEDIAWIKI_EMERGENCY_CONTACT
+    MEDIAWIKI_PASSWORD_SENDER
+    MEDIAWIKI_SMTP_HOST
+    MEDIAWIKI_SMTP_PORT
+    MEDIAWIKI_SMTP_AUTH
+    MEDIAWIKI_SMTP_SECURE
+    MEDIAWIKI_SMTP_USERNAME
+    MEDIAWIKI_SMTP_PASSWORD
+)
+
+OPTIONAL_ENV_ARGS=()
+for var_name in "${OPTIONAL_ENV_VARS[@]}"; do
+    var_value="${!var_name:-}"
+    if [ -n "$var_value" ]; then
+        OPTIONAL_ENV_ARGS+=( -e "${var_name}=${var_value}" )
+    fi
+done
+
 CONTAINER_NAME="mediawiki_wiki_production"
 IMAGE="mediawiki:1.45.3"
 NETWORK="trigowiki_production"
@@ -56,6 +75,7 @@ docker run -d \
     -e MEDIAWIKI_LANGUAGE_CODE=de \
     -e MEDIAWIKI_DEFAULT_SKIN=vector \
     -e MEDIAWIKI_ENABLE_UPLOADS=1 \
+    "${OPTIONAL_ENV_ARGS[@]}" \
     -v "${BASE}/config-lts/LocalSettings.php:/var/www/html/LocalSettings.php" \
     -v "${BASE}/config-lts/SearchSettings.php:/var/www/html/SearchSettings.php" \
     -v "${BASE}/config-lts/RecentBreadcrumbs.php:/var/www/html/RecentBreadcrumbs.php" \
