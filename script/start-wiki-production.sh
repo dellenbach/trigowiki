@@ -77,6 +77,7 @@ docker run -d \
     -e MEDIAWIKI_ENABLE_UPLOADS=1 \
     "${OPTIONAL_ENV_ARGS[@]}" \
     -v "${BASE}/config-lts/LocalSettings.php:/var/www/html/LocalSettings.php" \
+    -v "${BASE}/config-lts/EmbeddingSettings.php:/var/www/html/EmbeddingSettings.php" \
     -v "${BASE}/config-lts/SearchSettings.php:/var/www/html/SearchSettings.php" \
     -v "${BASE}/config-lts/RecentBreadcrumbs.php:/var/www/html/RecentBreadcrumbs.php" \
     -v "${BASE}/config-lts/InfixTitleSearch.php:/var/www/html/InfixTitleSearch.php" \
@@ -85,6 +86,9 @@ docker run -d \
     -v "${BASE}/extensions-lts/AdvancedSearch:/var/www/html/extensions/AdvancedSearch" \
     -v "${BASE}/extensions-lts/TimedMediaHandler:/var/www/html/extensions/TimedMediaHandler" \
     -v "${BASE}/extensions-lts/Interwiki:/var/www/html/extensions/Interwiki" \
+    -v "${BASE}/extensions/DrawioEditorNEW:/var/www/html/extensions/DrawioEditor" \
+    -v "${BASE}/extensions/Iframe:/var/www/html/extensions/Iframe" \
+    -v "${BASE}/extensions/PDFEmbed:/var/www/html/extensions/PDFEmbed" \
     -v "${BASE}/images:/var/www/html/images" \
     -v "${BASE}/Ressourcen:/var/www/html/resources/trigowiki" \
     "$IMAGE"

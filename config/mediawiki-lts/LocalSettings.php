@@ -309,3 +309,8 @@ $trigowikiSearchSettings = "$IP/SearchSettings.php";
 if ( file_exists( $trigowikiSearchSettings ) ) {
     require_once $trigowikiSearchSettings;
 }
+
+$trigowikiEmbeddingSettings = "$IP/EmbeddingSettings.php";
+if ( file_exists( $trigowikiEmbeddingSettings ) ) {
+    require_once $trigowikiEmbeddingSettings;
+}
