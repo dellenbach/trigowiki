@@ -86,6 +86,7 @@ docker run -d \
     -v "${BASE}/extensions-lts/AdvancedSearch:/var/www/html/extensions/AdvancedSearch" \
     -v "${BASE}/extensions-lts/TimedMediaHandler:/var/www/html/extensions/TimedMediaHandler" \
     -v "${BASE}/extensions-lts/Interwiki:/var/www/html/extensions/Interwiki" \
+    -v "${BASE}/extensions-lts/Mermaid:/var/www/html/extensions/Mermaid" \
     -v "${BASE}/extensions/DrawioEditorNEW:/var/www/html/extensions/DrawioEditor" \
     -v "${BASE}/extensions/Iframe:/var/www/html/extensions/Iframe" \
     -v "${BASE}/extensions/PDFEmbed:/var/www/html/extensions/PDFEmbed" \

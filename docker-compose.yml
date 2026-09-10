@@ -82,6 +82,7 @@ services:
       - ${PROD_ROOT:-/srv/mediawiki-production}/extensions-lts/AdvancedSearch:/var/www/html/extensions/AdvancedSearch
       - ${PROD_ROOT:-/srv/mediawiki-production}/extensions-lts/TimedMediaHandler:/var/www/html/extensions/TimedMediaHandler
       - ${PROD_ROOT:-/srv/mediawiki-production}/extensions-lts/Interwiki:/var/www/html/extensions/Interwiki
+      - ${PROD_ROOT:-/srv/mediawiki-production}/extensions-lts/Mermaid:/var/www/html/extensions/Mermaid
       - ${PROD_ROOT:-/srv/mediawiki-production}/images:/var/www/html/images
       - ${PROD_ROOT:-/srv/mediawiki-production}/Ressourcen:/var/www/html/resources/trigowiki:ro
 
