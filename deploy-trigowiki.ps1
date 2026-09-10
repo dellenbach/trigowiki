@@ -71,19 +71,19 @@ PROD_ROOT="$RemoteRoot"
 TMP="$RemoteTmpDir"
 
 # Config und Scripts deployen
-mkdir -p "\${PROD_ROOT}/config-lts" "\${PROD_ROOT}/script" "\${PROD_ROOT}/Ressourcen"
-cp -af "\${TMP}/config/mediawiki-lts/." "\${PROD_ROOT}/config-lts/"
-cp -af "\${TMP}/script/."              "\${PROD_ROOT}/script/"
-cp -af "\${TMP}/Ressourcen/."          "\${PROD_ROOT}/Ressourcen/"
-chmod -R a+rX "\${PROD_ROOT}/Ressourcen"
-find "\${PROD_ROOT}/script" -name '*.sh' -exec chmod 750 {} +
+mkdir -p "`${PROD_ROOT}/config-lts" "`${PROD_ROOT}/script" "`${PROD_ROOT}/Ressourcen"
+cp -af "`${TMP}/config/mediawiki-lts/." "`${PROD_ROOT}/config-lts/"
+cp -af "`${TMP}/script/."              "`${PROD_ROOT}/script/"
+cp -af "`${TMP}/Ressourcen/."          "`${PROD_ROOT}/Ressourcen/"
+chmod -R a+rX "`${PROD_ROOT}/Ressourcen"
+find "`${PROD_ROOT}/script" -name '*.sh' -exec chmod 750 {} +
 
 # docker-compose.yml und .env.example im Repo-Verzeichnis ablegen
-mkdir -p "\${PROD_ROOT}/repo"
-cp -f "\${TMP}/docker-compose.yml" "\${PROD_ROOT}/repo/"
-cp -f "\${TMP}/.env.example"       "\${PROD_ROOT}/repo/"
+mkdir -p "`${PROD_ROOT}/repo"
+cp -f "`${TMP}/docker-compose.yml" "`${PROD_ROOT}/repo/"
+cp -f "`${TMP}/.env.example"       "`${PROD_ROOT}/repo/"
 
-rm -rf "\${TMP}"
+rm -rf "`${TMP}"
 
 if [ "$skipFlag" = "1" ]; then
   echo "SkipRun gesetzt; kein Container-Restart."
@@ -91,11 +91,14 @@ if [ "$skipFlag" = "1" ]; then
 fi
 
 echo "Wiki-Container neu starten..."
-bash "\${PROD_ROOT}/script/start-wiki-production.sh"
+bash "`${PROD_ROOT}/script/start-wiki-production.sh"
 "@
 
 Write-Host "Ausfuehren auf $HostName ..."
-ssh -tt "$UserName@$HostName" "$remoteCmd"
+# Login-Shell auf brisen ist kein bash; Skript explizit per stdin an bash uebergeben.
+# CRLF muss zu LF normalisiert werden, sonst haengt an der letzten Option ein \r.
+$remoteCmdUnix = $remoteCmd -replace "`r`n", "`n"
+$remoteCmdUnix | ssh "$UserName@$HostName" "bash"
 Write-Host "Fertig."
 
 
