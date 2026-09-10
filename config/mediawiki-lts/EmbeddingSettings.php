@@ -31,6 +31,11 @@ if ( file_exists( $iframeExtensionJson ) ) {
     require_once $iframeLegacyEntry;
 }
 
+$mermaidExtensionJson = "$IP/extensions/Mermaid/extension.json";
+if ( file_exists( $mermaidExtensionJson ) ) {
+    wfLoadExtension( 'Mermaid' );
+}
+
 $wgIframe['category'] = 'Iframe';
 $wgIframe['width'] = 1028;
 $wgIframe['height'] = 768;
