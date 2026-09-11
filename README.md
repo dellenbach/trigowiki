@@ -6,7 +6,7 @@ Infrastructure-as-Code für die produktive MediaWiki-Instanz (Trigonet-Intranet-
 
 | Komponente | Version | Container |
 |---|---|---|
-| MediaWiki | 1.45.3 | `mediawiki_wiki_production` (Port 8081) |
+| MediaWiki | 1.46.0 | `mediawiki_wiki_production` (Port 8081) |
 | MySQL | 5.7 | `mediawiki_mysql_production` |
 | OpenSearch | 1.3.20 | `opensearch_production` |
 | OpenResty | alpine | `trigowiki_openresty` (Port 80) |
