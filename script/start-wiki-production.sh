@@ -46,7 +46,7 @@ for var_name in "${OPTIONAL_ENV_VARS[@]}"; do
 done
 
 CONTAINER_NAME="mediawiki_wiki_production"
-IMAGE="mediawiki:1.45.3"
+IMAGE="mediawiki:1.46.0"
 NETWORK="trigowiki_production"
 BASE="/srv/mediawiki-production"
 

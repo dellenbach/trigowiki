@@ -1,4 +1,4 @@
-# Trigowiki Produktions-Stack (MediaWiki 1.45.3, MySQL 5.7, OpenSearch 1.3)
+# Trigowiki Produktions-Stack (MediaWiki 1.46.0, MySQL 5.7, OpenSearch 1.3)
 #
 # Ersteinrichtung neuer Server: script/setup-new-server.sh
 # Vorlage fuer Secrets: .env.example  →  .env (gitignored)
@@ -38,7 +38,7 @@ services:
       - opensearch_production_data:/usr/share/opensearch/data
 
   mediawiki_wiki_production:
-    image: mediawiki:1.45.3
+    image: mediawiki:1.46.0
     container_name: mediawiki_wiki_production
     restart: unless-stopped
     depends_on:
